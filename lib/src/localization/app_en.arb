@@ -1,0 +1,132 @@
+{
+  "appTitle": "Swifty Companion",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "searchHint": "Search by login...",
+  "@searchHint": {
+    "description": "Hint text for the search bar"
+  },
+  "searchTitle": "Find any 42 student",
+  "@searchTitle": {
+    "description": "Subtitle on the search screen"
+  },
+  "noResultsFound": "No results found",
+  "@noResultsFound": {
+    "description": "Message when search returns no results"
+  },
+  "enterAtLeastTwoChars": "Please enter at least 2 characters",
+  "@enterAtLeastTwoChars": {
+    "description": "Message when search query is too short"
+  },
+  "startTypingToSearch": "Start typing to search",
+  "@startTypingToSearch": {
+    "description": "Message shown when search field is empty"
+  },
+  "failedToLoadProfile": "Failed to load profile",
+  "@failedToLoadProfile": {
+    "description": "Error message when profile loading fails"
+  },
+  "info": "Info",
+  "@info": {
+    "description": "Tab label for information section"
+  },
+  "projects": "Projects",
+  "@projects": {
+    "description": "Tab label for projects section"
+  },
+  "skills": "Skills",
+  "@skills": {
+    "description": "Tab label for skills section"
+  },
+  "achievements": "Achievements",
+  "@achievements": {
+    "description": "Tab label for achievements section"
+  },
+  "contactInformation": "Contact Information",
+  "@contactInformation": {
+    "description": "Section title for contact info"
+  },
+  "academicInformation": "Academic Information",
+  "@academicInformation": {
+    "description": "Section title for academic info"
+  },
+  "wallet": "Wallet",
+  "@wallet": {
+    "description": "Label for wallet balance"
+  },
+  "corrections": "Corrections",
+  "@corrections": {
+    "description": "Label for correction points"
+  },
+  "score": "Score",
+  "@score": {
+    "description": "Label for coalition score"
+  },
+  "level": "Level {level}",
+  "@level": {
+    "description": "Level indicator with parameter",
+    "placeholders": {
+      "level": {
+        "type": "String",
+        "example": "4.2"
+      }
+    }
+  },
+  "pool": "Pool: {year}",
+  "@pool": {
+    "description": "Pool year indicator",
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2023"
+      }
+    }
+  },
+  "correctionPoints": "Correction Points: {points}",
+  "@correctionPoints": {
+    "description": "Correction points indicator",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "noProjectsAvailable": "No projects available",
+  "@noProjectsAvailable": {
+    "description": "Message when user has no projects"
+  },
+  "noSkillsAvailable": "No skills available",
+  "@noSkillsAvailable": {
+    "description": "Message when user has no skills"
+  },
+  "noAchievementsYet": "No achievements yet",
+  "@noAchievementsYet": {
+    "description": "Message when user has no achievements"
+  },
+  "inProgress": "In Progress",
+  "@inProgress": {
+    "description": "Status for ongoing projects"
+  },
+  "failed": "Failed",
+  "@failed": {
+    "description": "Status for failed projects"
+  },
+  "passed": "Passed",
+  "@passed": {
+    "description": "Status for passed projects"
+  },
+  "goBack": "Go Back",
+  "@goBack": {
+    "description": "Button text to return to previous screen"
+  },
+  "shareProfile": "Share Profile",
+  "@shareProfile": {
+    "description": "Action to share user profile"
+  },
+  "shareFunctionalityComingSoon": "Share functionality coming soon!",
+  "@shareFunctionalityComingSoon": {
+    "description": "Temporary message for unimplemented share feature"
+  }
+}
