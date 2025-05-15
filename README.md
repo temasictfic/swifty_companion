@@ -62,26 +62,6 @@ Your credentials are securely stored on the device using platform-specific encry
 - Credentials remain local to your device
 - No external configuration files are used
 
-## Project Structure
-
-```
-lib/
-├── src/
-│   ├── app.dart                 # Main app configuration
-│   ├── core/                    # Core business logic
-│   │   ├── models/             # Data models
-│   │   ├── services/           # API and auth services
-│   │   ├── themes/             # App theming
-│   │   └── utils/              # Utility functions
-│   ├── features/               # Feature modules
-│   │   ├── auth/              # Authentication features
-│   │   ├── profile/           # Profile display
-│   │   ├── search/            # Search functionality
-│   │   └── settings/          # Settings management
-│   └── shared/                # Shared widgets
-└── main.dart                  # App entry point
-```
-
 ## How to Get 42 API Credentials
 
 1. Log in to your 42 intranet account
