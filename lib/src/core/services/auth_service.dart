@@ -2,18 +2,49 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'settings_service.dart';
 
 class AuthService {
   static const String _tokenKey = 'access_token';
   static const String _tokenExpiryKey = 'token_expiry';
   static const String _baseUrl = 'https://api.intra.42.fr/oauth/token';
 
-  final String _clientId = dotenv.env['CLIENT_ID'] ?? '';
-  final String _clientSecret = dotenv.env['CLIENT_SECRET'] ?? '';
-
   // Cache the token in memory for quick access
   String? _cachedToken;
   DateTime? _cachedExpiry;
+  
+  // Singleton instance
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
+  AuthService._internal();
+  
+  final SettingsService _settingsService = SettingsService();
+
+  /// Get API credentials, either from settings or .env fallback
+  Future<Map<String, String>> _getApiCredentials() async {
+    // First try to get from secure storage
+    final credentials = await _settingsService.getCredentials();
+    
+    if (credentials['clientId'] != null && credentials['clientSecret'] != null) {
+      return {
+        'clientId': credentials['clientId']!,
+        'clientSecret': credentials['clientSecret']!,
+      };
+    }
+    
+    // Fallback to .env file if available
+    final envClientId = dotenv.env['CLIENT_ID'];
+    final envClientSecret = dotenv.env['CLIENT_SECRET'];
+    
+    if (envClientId != null && envClientSecret != null) {
+      return {
+        'clientId': envClientId,
+        'clientSecret': envClientSecret,
+      };
+    }
+    
+    throw Exception('No API credentials found. Please configure them in settings.');
+  }
 
   /// Get a valid access token, either from cache or by fetching a new one
   Future<String> getAccessToken() async {
@@ -39,6 +70,8 @@ class AuthService {
   /// Fetch a new access token from the API
   Future<String> _fetchNewToken() async {
     try {
+      final credentials = await _getApiCredentials();
+      
       final response = await http.post(
         Uri.parse(_baseUrl),
         headers: {
@@ -46,8 +79,8 @@ class AuthService {
         },
         body: {
           'grant_type': 'client_credentials',
-          'client_id': _clientId,
-          'client_secret': _clientSecret,
+          'client_id': credentials['clientId']!,
+          'client_secret': credentials['clientSecret']!,
         },
       );
 
@@ -126,5 +159,26 @@ class AuthService {
     await _clearStoredToken();
     _cachedToken = null;
     _cachedExpiry = null;
+  }
+  
+  /// Validate credentials by attempting to get an access token
+  Future<bool> validateCredentials(String clientId, String clientSecret) async {
+    try {
+      final response = await http.post(
+        Uri.parse(_baseUrl),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'grant_type': 'client_credentials',
+          'client_id': clientId,
+          'client_secret': clientSecret,
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
   }
 }

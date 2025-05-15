@@ -37,6 +37,7 @@ dependencies:
   flutter_dotenv: ^5.2.1
   http: ^1.2.2
   shared_preferences: ^2.3.3
+  flutter_secure_storage: ^9.0.0
   
   # UI/UX enhancements
   flutter_svg: ^2.0.16

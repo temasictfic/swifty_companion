@@ -134,35 +134,52 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
           SafeArea(
             child: Column(
               children: [
-                // Header with animated title
+                // Header with animated title and settings button
                 FadeTransition(
                   opacity: _fadeAnimation,
                   child: SlideTransition(
                     position: _slideAnimation,
                     child: Container(
                       padding: const EdgeInsets.all(24),
-                      child: Column(
+                      child: Row(
                         children: [
-                          const Text(
-                            'Swifty Companion',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Swifty Companion',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ShaderMask(
+                                  shaderCallback: (bounds) =>
+                                      AppTheme().primaryGradient.createShader(bounds),
+                                  child: const Text(
+                                    'Find any 42 student',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          ShaderMask(
-                            shaderCallback: (bounds) =>
-                                AppTheme().primaryGradient.createShader(bounds),
-                            child: const Text(
-                              'Find any 42 student',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                              ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.settings,
+                              color: Colors.white,
+                              size: 28,
                             ),
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/settings');
+                            },
                           ),
                         ],
                       ),
