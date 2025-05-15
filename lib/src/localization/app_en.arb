@@ -55,8 +55,8 @@
   "@wallet": {
     "description": "Label for wallet balance"
   },
-  "evaluationPoints": "Evaluation Points",
-  "@evaluationPoints": {
+  "evoPoints": "Evo Points",
+  "@evoPoints": {
     "description": "Label for evaluation points"
   },
   "score": "Score",

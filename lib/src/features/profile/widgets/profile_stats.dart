@@ -19,26 +19,40 @@ class ProfileStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassContainer(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildStatItem(
-            icon: Icons.account_balance_wallet,
-            value: '${user.wallet}₳',
-            label: 'Wallet',
+          Expanded(
+            child: _buildStatItem(
+              icon: Icons.account_balance_wallet,
+              value: '${user.wallet}₳',
+              label: 'Wallet',
+            ),
           ),
           _buildDivider(),
-          _buildStatItem(
-            icon: Icons.check_circle,
-            value: user.correctionPoint.toString(),
-            label: 'Evaluation Points',
+          Expanded(
+            child: _buildStatItem(
+              icon: Icons.check_circle,
+              value: user.correctionPoint.toString(),
+              label: 'Evo Points',
+            ),
           ),
           _buildDivider(),
-          _buildStatItem(
-            icon: Icons.emoji_events,
-            value: '${coalitionUser?.score ?? 0}',
-            label: 'Score',
-            subtitle: coalitionUser?.rank != null ? '#${coalitionUser!.rank}' : null,
+          Expanded(
+            child: _buildStatItem(
+              icon: Icons.emoji_events,
+              value: '${coalitionUser?.score ?? 0}',
+              label: 'Score',
+            ),
+          ),
+          _buildDivider(),
+          Expanded(
+            child: _buildStatItem(
+              icon: Icons.leaderboard,
+              value: coalitionUser?.rank != null ? '#${coalitionUser!.rank}' : 'N/A',
+              label: 'Rank',
+            ),
           ),
         ],
       ),
@@ -49,9 +63,9 @@ class ProfileStats extends StatelessWidget {
     required IconData icon,
     required String value,
     required String label,
-    String? subtitle,
   }) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(
           icon,
@@ -62,27 +76,16 @@ class ProfileStats extends StatelessWidget {
         Text(
           value,
           style: const TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
         ),
-        if (subtitle != null) ...[
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white.withValues(alpha: 0.9),
-            ),
-          ),
-        ],
         const SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             color: Colors.white.withValues(alpha: 0.7),
           ),
         ),
