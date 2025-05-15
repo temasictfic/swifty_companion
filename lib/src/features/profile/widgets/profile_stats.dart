@@ -27,7 +27,7 @@ class ProfileStats extends StatelessWidget {
           _buildStatItem(
             icon: Icons.check_circle,
             value: user.correctionPoint.toString(),
-            label: 'Corrections',
+            label: 'Evaluation Points',
           ),
           _buildDivider(),
           _buildStatItem(
