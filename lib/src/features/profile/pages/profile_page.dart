@@ -87,10 +87,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         _coalition = results[1] as CoalitionModel?;
       });
 
-      // Load projects after user data
-      if (_selectedTab == 1) {
-        await _loadProjects(login);
-      }
+      // Load projects to get active projects count
+      await _loadProjects(login);
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to load user data';
@@ -124,6 +122,29 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     if (index == 1 && _projects.isEmpty && _user != null) {
       await _loadProjects(_user!.login);
     }
+  }
+
+
+  String _getCurrentGrade() {
+    // Find the active cursus with the highest level
+    final activeCursus = _user!.cursusUsers
+        .where((cursus) => cursus.endAt == null || cursus.endAt!.isAfter(DateTime.now()))
+        .toList();
+    
+    if (activeCursus.isEmpty) {
+      return 'None';
+    }
+    
+    // Sort by level to get the highest
+    activeCursus.sort((a, b) => b.level.compareTo(a.level));
+    return activeCursus.first.grade ?? 'Student';
+  }
+
+  int _getActiveProjects() {
+    return _projects.where((project) => 
+      project.status == 'in_progress' || 
+      project.status == 'searching_a_group'
+    ).length;
   }
 
   @override
@@ -296,12 +317,36 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           icon: Icons.school,
           children: [
             _buildInfoRow(Icons.pool, 'Pool: ${_user!.poolYear ?? "N/A"}'),
-            _buildInfoRow(Icons.account_balance_wallet, 'Wallet: ${_user!.wallet}₳'),
-            _buildInfoRow(Icons.check_circle, 'Correction Points: ${_user!.correctionPoint}'),
+            if (_user!.poolMonth != null) _buildInfoRow(Icons.calendar_month, 'Pool Month: ${_formatPoolMonth(_user!.poolMonth!)}'),
+            _buildInfoRow(Icons.timeline, 'Enrolled Cursus: ${_getEnrolledCursusCount()}'),
+            _buildInfoRow(Icons.star, 'Current Grade: ${_getCurrentGrade()}'),
+            if (_getActiveProjects() > 0) _buildInfoRow(Icons.assignment, 'Active Projects: ${_getActiveProjects()}'),
+            _buildInfoRow(Icons.check_circle_outline, 'Completed Projects: ${_getCompletedProjects()}'),
+            _buildInfoRow(Icons.today, 'Member Since: ${_formatDate(_user!.createdAt)}'),
           ],
         ),
       ],
     );
+  }
+
+  String _formatPoolMonth(String poolMonth) {
+    // Capitalize first letter
+    return poolMonth[0].toUpperCase() + poolMonth.substring(1);
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'N/A';
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  int _getEnrolledCursusCount() {
+    return _user!.cursusUsers.length;
+  }
+
+  int _getCompletedProjects() {
+    return _projects.where((project) => 
+      project.status == 'finished' && project.validated == true
+    ).length;
   }
 
   Widget _buildInfoRow(IconData icon, String value) {
