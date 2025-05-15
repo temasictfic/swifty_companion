@@ -23,11 +23,39 @@ class UserModel {
   factory UserModel.fromJson(Map<String, dynamic> json) {
     // Parse the current cursus user data
     final cursusUsers = json['cursus_users'] as List<dynamic>? ?? [];
-    final currentCursus = cursusUsers.isNotEmpty ? cursusUsers.last : null;
+    
+    // Find the main 42 cursus (cursus_id: 21 is typically the main cursus)
+    Map<String, dynamic>? currentCursus;
+    
+    // First try to find cursus with id 21 (42cursus)
+    for (final cursus in cursusUsers) {
+      if (cursus['cursus_id'] == 21 || cursus['cursus_id'] == 9) { // 21 is 42cursus, 9 is C Piscine
+        currentCursus = cursus as Map<String, dynamic>;
+        break;
+      }
+    }
+    
+    // If not found, use the last cursus or the one with the highest level
+    if (currentCursus == null && cursusUsers.isNotEmpty) {
+      // Sort by level to get the highest one
+      final sortedCursus = List<Map<String, dynamic>>.from(cursusUsers)
+        ..sort((a, b) {
+          final levelA = (a['level'] as num?)?.toDouble() ?? 0.0;
+          final levelB = (b['level'] as num?)?.toDouble() ?? 0.0;
+          return levelB.compareTo(levelA);
+        });
+      currentCursus = sortedCursus.first;
+    }
     
     // Parse level and skills from cursus data
     final level = currentCursus?['level'] != null ? (currentCursus!['level'] as num).toDouble() : 0.0;
     final skills = currentCursus?['skills'] as List<dynamic>? ?? [];
+    
+    // If no skills in cursus, check if they're in the main user object
+    var finalSkills = skills;
+    if (finalSkills.isEmpty && json['skills'] != null) {
+      finalSkills = json['skills'] as List<dynamic>;
+    }
     
     // Parse achievements
     final achievements = json['achievements'] as List<dynamic>? ?? [];
@@ -44,7 +72,7 @@ class UserModel {
       wallet: json['wallet'] as int? ?? 0,
       poolYear: json['pool_year'] as String?,
       level: level,
-      skills: skills.map((skill) => SkillModel.fromJson(skill as Map<String, dynamic>)).toList(),
+      skills: finalSkills.map((skill) => SkillModel.fromJson(skill as Map<String, dynamic>)).toList(),
       achievements: achievements.map((achievement) => AchievementModel.fromJson(achievement as Map<String, dynamic>)).toList(),
       location: json['location'] as String?,
       isActive: json['active?'] == true,
