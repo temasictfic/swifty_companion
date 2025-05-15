@@ -1,4 +1,4 @@
-# Swifty Companion - API Settings Integration
+# Fluttery Mate - API Settings Integration
 
 ## Overview
 
