@@ -23,9 +23,13 @@ class ProjectsSection extends StatelessWidget {
   }
 
   Widget _buildProjectItem(ProjectModel project) {
-    final color = coalitionColor != null
+    final coalitionColorParsed = coalitionColor != null
         ? Color(int.parse('0xFF${coalitionColor!.replaceAll('#', '')}'))
         : const Color(0xFF00BABC);
+    
+    // Use gold color for excellent projects
+    final excellentColor = const Color(0xFFFFD700); // Gold color
+    final _ = project.isExcellent ? excellentColor : coalitionColorParsed;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -58,7 +62,7 @@ class ProjectsSection extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: project.isExcellent ? color : Colors.white,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -87,27 +91,40 @@ class ProjectsSection extends StatelessWidget {
             ),
 
             // Final mark badge
-            if (project.finalMark != null && project.isExcellent)
+            if (project.finalMark != null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
+                  color: project.isExcellent 
+                      ? excellentColor.withValues(alpha: 0.2)
+                      : (project.isSuccess 
+                          ? Colors.green.withValues(alpha: 0.2)
+                          : Colors.red.withValues(alpha: 0.2)),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: project.isExcellent
+                        ? excellentColor.withValues(alpha: 0.5)
+                        : Colors.transparent,
+                    width: 1,
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.star,
-                      size: 16,
-                      color: color,
-                    ),
-                    const SizedBox(width: 4),
+                    if (project.isExcellent)
+                      Icon(
+                        Icons.star,
+                        size: 16,
+                        color: excellentColor,
+                      ),
+                    if (project.isExcellent) const SizedBox(width: 4),
                     Text(
                       project.finalMark.toString(),
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: color,
+                        color: project.isExcellent 
+                            ? excellentColor
+                            : (project.isSuccess ? Colors.green : Colors.red),
                       ),
                     ),
                   ],
@@ -125,9 +142,7 @@ class ProjectsSection extends StatelessWidget {
     }
     if (project.isSuccess) {
       if (project.isExcellent) {
-        return coalitionColor != null
-            ? Color(int.parse('0xFF${coalitionColor!.replaceAll('#', '')}'))
-            : const Color(0xFF00BABC);
+        return const Color(0xFFFFD700); // Gold color
       }
       return Colors.green;
     }
