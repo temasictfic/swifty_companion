@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'settings_service.dart';
@@ -20,26 +19,15 @@ class AuthService {
   
   final SettingsService _settingsService = SettingsService();
 
-  /// Get API credentials, either from settings or .env fallback
+  /// Get API credentials from settings only
   Future<Map<String, String>> _getApiCredentials() async {
-    // First try to get from secure storage
+    // Get credentials from secure storage
     final credentials = await _settingsService.getCredentials();
     
     if (credentials['clientId'] != null && credentials['clientSecret'] != null) {
       return {
         'clientId': credentials['clientId']!,
         'clientSecret': credentials['clientSecret']!,
-      };
-    }
-    
-    // Fallback to .env file if available
-    final envClientId = dotenv.env['CLIENT_ID'];
-    final envClientSecret = dotenv.env['CLIENT_SECRET'];
-    
-    if (envClientId != null && envClientSecret != null) {
-      return {
-        'clientId': envClientId,
-        'clientSecret': envClientSecret,
       };
     }
     

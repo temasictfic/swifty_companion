@@ -39,27 +39,15 @@ A modern Flutter application for browsing 42 student profiles using the 42 API.
 
 ### Configuration
 
-The app now supports two methods for API configuration:
-
-#### Method 1: In-App Configuration (Recommended)
+On first launch, the app will guide you through setting up your 42 API credentials:
 
 1. Launch the app
 2. Follow the initial setup wizard
-3. Enter your 42 API credentials when prompted
-4. Your credentials will be securely stored on the device
+3. Click "Configure API Settings"
+4. Enter your 42 API Client ID and Client Secret
+5. Click "Save Credentials"
 
-#### Method 2: .env File
-
-1. Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Add your 42 API credentials:
-   ```
-   CLIENT_ID=your_client_id_here
-   CLIENT_SECRET=your_client_secret_here
-   ```
+Your credentials are securely stored on the device using platform-specific encryption.
 
 ## Usage
 
@@ -72,6 +60,7 @@ The app now supports two methods for API configuration:
 - API credentials are stored securely using platform-specific encryption
 - No credentials are transmitted or stored in plain text
 - Credentials remain local to your device
+- No external configuration files are used
 
 ## Project Structure
 
@@ -92,6 +81,14 @@ lib/
 │   └── shared/                # Shared widgets
 └── main.dart                  # App entry point
 ```
+
+## How to Get 42 API Credentials
+
+1. Log in to your 42 intranet account
+2. Navigate to Settings > API
+3. Create a new application
+4. Copy your Client ID and Client Secret
+5. Use these credentials in the app settings
 
 ## Contributing
 
@@ -141,5 +138,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
    - Enter at least 2 characters
    - Check for typos in the login
    - Ensure API credentials are configured
+
+4. **Settings Access**
+   - Settings can be accessed from the gear icon in the search screen
+   - You can update or clear credentials at any time
 
 For more issues, please check the [Issues](https://github.com/yourusername/swifty-companion/issues) page or create a new one.

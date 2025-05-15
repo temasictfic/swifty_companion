@@ -108,10 +108,4 @@ class SettingsService {
     // by making a test API call to verify the credentials work
     return clientId.isNotEmpty && clientSecret.isNotEmpty;
   }
-  
-  /// Check if credentials need to be migrated from .env file
-  Future<bool> needsMigration() async {
-    final isConfigured = await this.isConfigured();
-    return !isConfigured;
-  }
 }
