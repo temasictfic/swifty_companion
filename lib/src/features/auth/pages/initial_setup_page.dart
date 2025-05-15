@@ -9,101 +9,112 @@ class InitialSetupPage extends StatelessWidget {
     
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // App Logo or Icon
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: theme.primaryColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.school,
-                  size: 60,
-                  color: theme.primaryColor,
-                ),
-              ),
-              const SizedBox(height: 32),
-              
-              // Welcome Text
-              Text(
-                'Welcome to Fluttery Mate',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              
-              // Description
-              Text(
-                'To get started with browsing 42 student profiles, '
-                'you need to configure your API credentials.',
-                style: theme.textTheme.bodyLarge,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-              
-              // Features List
-              _buildFeatureItem(
-                context,
-                Icons.search,
-                'Search Students',
-                'Find and explore 42 student profiles',
-              ),
-              const SizedBox(height: 16),
-              _buildFeatureItem(
-                context,
-                Icons.analytics,
-                'View Progress',
-                'Check projects, skills, and achievements',
-              ),
-              const SizedBox(height: 16),
-              _buildFeatureItem(
-                context,
-                Icons.security,
-                'Secure Storage',
-                'Your credentials are stored safely on device',
-              ),
-              const SizedBox(height: 48),
-              
-              // Setup Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/settings',
-                      arguments: {'isInitialSetup': true},
-                    );
-                  },
-                  icon: const Icon(Icons.settings),
-                  label: const Text('Configure API Settings'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
+        child: SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 24),
+                    
+                    // App Logo or Icon
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: theme.primaryColor.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.school,
+                        size: 60,
+                        color: theme.primaryColor,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 32),
+                    
+                    // Welcome Text
+                    Text(
+                      'Welcome to Fluttery Mate',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Description
+                    Text(
+                      'To get started with browsing 42 student profiles, '
+                      'you need to configure your API credentials.',
+                      style: theme.textTheme.bodyLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 48),
+                    
+                    // Features List
+                    _buildFeatureItem(
+                      context,
+                      Icons.search,
+                      'Search Students',
+                      'Find and explore 42 student profiles',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildFeatureItem(
+                      context,
+                      Icons.analytics,
+                      'View Progress',
+                      'Check projects, skills, and achievements',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildFeatureItem(
+                      context,
+                      Icons.security,
+                      'Secure Storage',
+                      'Your credentials are stored safely on device',
+                    ),
+                    const SizedBox(height: 48),
+                    
+                    // Setup Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/settings',
+                            arguments: {'isInitialSetup': true},
+                          );
+                        },
+                        icon: const Icon(Icons.settings),
+                        label: const Text('Configure API Settings'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Help Link
+                    TextButton(
+                      onPressed: () {
+                        _showHelpDialog(context);
+                      },
+                      child: const Text('How to get API credentials?'),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
-              
-              const SizedBox(height: 16),
-              
-              // Help Link
-              TextButton(
-                onPressed: () {
-                  _showHelpDialog(context);
-                },
-                child: const Text('How to get API credentials?'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
