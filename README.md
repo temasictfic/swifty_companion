@@ -23,8 +23,8 @@ A modern Flutter application for browsing 42 student profiles using the 42 API.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/swifty-companion.git
-   cd swifty-companion
+   git clone https://github.com/yourusername/swifty_companion.git
+   cd swifty_companion
    ```
 
 2. Install dependencies:
