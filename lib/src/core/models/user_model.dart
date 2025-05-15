@@ -128,10 +128,10 @@ class UserModel {
 class CursusUser {
   CursusUser({
     required this.id,
-    required this.grade,
+    this.grade,
     required this.level,
     required this.cursusId,
-    required this.cursus,
+    this.cursus,
     this.beginAt,
     this.endAt,
     this.userId,
@@ -143,10 +143,10 @@ class CursusUser {
     final userData = json['user'] as Map<String, dynamic>?;
     
     return CursusUser(
-      id: json['id'] as int,
+      id: json['id'] as int? ?? 0,
       grade: json['grade'] as String?,
-      level: (json['level'] as num).toDouble(),
-      cursusId: json['cursus_id'] as int,
+      level: (json['level'] as num?)?.toDouble() ?? 0.0,
+      cursusId: json['cursus_id'] as int? ?? 0,
       beginAt: json['begin_at'] != null ? DateTime.parse(json['begin_at'].toString()) : null,
       endAt: json['end_at'] != null ? DateTime.parse(json['end_at'].toString()) : null,
       cursus: json['cursus'] != null ? Cursus.fromJson(json['cursus'] as Map<String, dynamic>) : null,
@@ -176,10 +176,10 @@ class Cursus {
 
   factory Cursus.fromJson(Map<String, dynamic> json) {
     return Cursus(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      slug: json['slug'] as String,
-      kind: json['kind'] as String,
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? '',
+      slug: json['slug'] as String? ?? '',
+      kind: json['kind'] as String? ?? '',
     );
   }
 

@@ -22,7 +22,18 @@ void main() {
         'created_at': '2023-01-01T00:00:00.000Z',
         'cursus_users': [
           {
+            'id': 1,
+            'cursus_id': 21,
             'level': 4.2,
+            'grade': null,
+            'begin_at': '2023-01-01T00:00:00.000Z',
+            'end_at': null,
+            'cursus': {
+              'id': 21,
+              'name': '42cursus',
+              'slug': '42cursus',
+              'kind': 'main',
+            },
             'skills': [
               {'name': 'Algorithms', 'level': 3.5},
               {'name': 'Graphics', 'level': 2.8},
