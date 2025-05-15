@@ -23,7 +23,7 @@ A modern Flutter application for browsing 42 student profiles using the 42 API.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/swifty_companion.git
+   git clone https://github.com/temasictfic/swifty_companion.git
    cd swifty_companion
    ```
 
@@ -123,4 +123,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
    - Settings can be accessed from the gear icon in the search screen
    - You can update or clear credentials at any time
 
-For more issues, please check the [Issues](https://github.com/yourusername/swifty-companion/issues) page or create a new one.
+For more issues, please check the [Issues](https://github.com/temasictfic/swifty_companion/issues) page or create a new one.
