@@ -9,6 +9,11 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# Add permissions needed for creating releases
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build:
     runs-on: ubuntu-latest

@@ -1,39 +1,35 @@
-# Release Notes - Version 1.0.0
+# Release Notes - v1.0.0
 
 ## 🚀 What's New
 
 ### Initial Release
 - Search for 42 students by login
 - View detailed student profiles including:
-  - Profile picture and basic info
+  - Profile picture and basic information
   - Skills with levels and percentages
   - Completed and failed projects
-  - Achievements and badges
-- Modern dark-themed UI with glassmorphism effects
+- Modern dark-themed UI with responsive design
 - Secure API credential management
-- Offline support for cached data
+- Error handling for network issues and login errors
 
-## 🔧 Technical Details
+## 📱 Technical Details
 
-- Built with Flutter 3.24.2
-- Minimum Android SDK: 21 (Android 5.0)
-- Target SDK: Latest stable
-- Secure credential storage using flutter_secure_storage
-
-## 📱 Supported Platforms
-
-- Android 5.0 (API level 21) and above
-- iOS support coming soon
+- Built with Flutter 3.29.3
+- Minimum Android version: Android 5.0 (API level 21)
+- Optimized for both phones and tablets
+- Available as APK for direct installation
 
 ## 🐛 Known Issues
 
 - None at this time
 
-## 📞 Support
+## 📋 Future Plans
 
-For issues or feature requests, please visit:
-https://github.com/temasictfic/swifty-companion/issues
+- iOS support coming soon
+- Improved offline mode
+- Additional profile details and statistics
+- Theme customization options
 
 ---
 
-Thank you for using Swifty Companion!
+Thank you for using Swifty Companion! This app was created as part of the 42 Mobile Initiation project.
