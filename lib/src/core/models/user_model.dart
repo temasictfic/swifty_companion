@@ -31,9 +31,19 @@ class UserModel {
     
     // First try to find cursus with id 21 (42cursus)
     for (final cursus in cursusUsers) {
-      if (cursus['cursus_id'] == 21 || cursus['cursus_id'] == 9) { // 21 is 42cursus, 9 is C Piscine
+      if (cursus['cursus_id'] == 21) { // 21 is 42cursus
         currentCursus = cursus as Map<String, dynamic>;
         break;
+      }
+    }
+    
+    // If no 42cursus found, try C Piscine (ID: 9)
+    if (currentCursus == null) {
+      for (final cursus in cursusUsers) {
+        if (cursus['cursus_id'] == 9) { // 9 is C Piscine
+          currentCursus = cursus as Map<String, dynamic>;
+          break;
+        }
       }
     }
     
@@ -49,7 +59,7 @@ class UserModel {
       currentCursus = sortedCursus.first;
     }
     
-    // Parse level and skills from cursus data
+    // Parse level and skills from the main 42cursus data
     final level = currentCursus?['level'] != null ? (currentCursus!['level'] as num).toDouble() : 0.0;
     final skills = currentCursus?['skills'] as List<dynamic>? ?? [];
     

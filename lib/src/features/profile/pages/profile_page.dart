@@ -126,7 +126,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
 
   String _getCurrentGrade() {
-    // Find the active cursus with the highest level
+    // Find the 42cursus first (ID: 21)
+    for (final cursus in _user!.cursusUsers) {
+      if (cursus.cursusId == 21 && (cursus.endAt == null || cursus.endAt!.isAfter(DateTime.now()))) {
+        return cursus.grade ?? 'Student';
+      }
+    }
+    
+    // If no active 42cursus, find any active cursus with the highest level
     final activeCursus = _user!.cursusUsers
         .where((cursus) => cursus.endAt == null || cursus.endAt!.isAfter(DateTime.now()))
         .toList();
