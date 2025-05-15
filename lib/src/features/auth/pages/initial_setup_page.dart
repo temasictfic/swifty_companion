@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../settings/pages/settings_page.dart';
 
 class InitialSetupPage extends StatelessWidget {
   const InitialSetupPage({super.key});
@@ -77,18 +76,12 @@ class InitialSetupPage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () async {
-                    final result = await Navigator.push(
+                  onPressed: () {
+                    Navigator.pushNamed(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const SettingsPage(),
-                      ),
+                      '/settings',
+                      arguments: {'isInitialSetup': true},
                     );
-                    
-                    // If settings were configured, navigate to main app
-                    if (result == true && context.mounted) {
-                      Navigator.pushReplacementNamed(context, '/home');
-                    }
                   },
                   icon: const Icon(Icons.settings),
                   label: const Text('Configure API Settings'),

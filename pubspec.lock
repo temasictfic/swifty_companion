@@ -241,10 +241,10 @@ packages:
     dependency: "direct main"
     description:
       name: glass_kit
-      sha256: "5cbf3c979089ebac808856a0f8e6161f0d302b71dfc18766fa40c25b87dfc304"
+      sha256: ccb7c31b07403d757bd338901a0f4859c081db05a6593916be87d7c20f07d9b7
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.0"
+    version: "4.0.1"
   http:
     dependency: "direct main"
     description:

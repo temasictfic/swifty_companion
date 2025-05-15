@@ -5,7 +5,12 @@ import '../../../shared/widgets/loading_overlay.dart';
 import '../widgets/credential_form.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  final bool isInitialSetup;
+  
+  const SettingsPage({
+    super.key,
+    this.isInitialSetup = false,
+  });
 
   @override
   SettingsPageState createState() => SettingsPageState();
@@ -65,6 +70,26 @@ class SettingsPageState extends State<SettingsPage> {
       
       _showSuccess('Credentials saved successfully!');
       await _loadSettings();
+      
+      // Handle navigation after saving
+      if (mounted) {
+        // Get the route arguments to check if this is initial setup
+        final route = ModalRoute.of(context);
+        final args = route?.settings.arguments as Map<String, dynamic>?;
+        final isFromInitialSetup = args?['isInitialSetup'] ?? widget.isInitialSetup;
+        
+        if (isFromInitialSetup) {
+          // Replace all routes and go to home
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/home',
+            (route) => false,
+          );
+        } else {
+          // Just pop back to previous screen
+          Navigator.pop(context);
+        }
+      }
     } catch (e) {
       _showError('Failed to save credentials: $e');
     } finally {
@@ -106,6 +131,15 @@ class SettingsPageState extends State<SettingsPage> {
         
         _showSuccess('Credentials cleared successfully');
         await _loadSettings();
+        
+        // If credentials are cleared and no longer configured, go to setup
+        if (!_hasCredentials && mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/setup',
+            (route) => false,
+          );
+        }
       } catch (e) {
         _showError('Failed to clear credentials: $e');
       } finally {
@@ -115,6 +149,7 @@ class SettingsPageState extends State<SettingsPage> {
   }
 
   void _showError(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -124,6 +159,7 @@ class SettingsPageState extends State<SettingsPage> {
   }
 
   void _showSuccess(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -134,114 +170,125 @@ class SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
-      body: LoadingOverlay(
-        isLoading: _isLoading,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.security,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'API Configuration',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Configure your 42 API credentials for accessing student data.',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      if (_hasCredentials && _lastConfiguredDate != null) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Configured on ${_formatDate(_lastConfiguredDate!)}',
-                                  style: const TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              CredentialForm(
-                onSave: _saveCredentials,
-                hasExistingCredentials: _hasCredentials,
-              ),
-              if (_hasCredentials) ...[
-                const SizedBox(height: 24),
+    return PopScope(
+      canPop: !widget.isInitialSetup || _hasCredentials,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        // This is called after the route has been popped
+        if (!didPop) {
+          // If we prevented the pop, show error message
+          _showError('Please configure your API credentials to continue');
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Settings'),
+          automaticallyImplyLeading: !widget.isInitialSetup || _hasCredentials,
+        ),
+        body: LoadingOverlay(
+          isLoading: _isLoading,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Danger Zone',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.error,
-                              ),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.security,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'API Configuration',
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: _clearCredentials,
-                            icon: const Icon(Icons.delete_forever),
-                            label: const Text('Clear Credentials'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Theme.of(context).colorScheme.error,
-                              side: BorderSide(
-                                color: Theme.of(context).colorScheme.error,
-                              ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Configure your 42 API credentials for accessing student data.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        if (_hasCredentials && _lastConfiguredDate != null) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: .1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Configured on ${_formatDate(_lastConfiguredDate!)}',
+                                    style: const TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
+                CredentialForm(
+                  onSave: _saveCredentials,
+                  hasExistingCredentials: _hasCredentials,
+                ),
+                if (_hasCredentials) ...[
+                  const SizedBox(height: 24),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Danger Zone',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _clearCredentials,
+                              icon: const Icon(Icons.delete_forever),
+                              label: const Text('Clear Credentials'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Theme.of(context).colorScheme.error,
+                                side: BorderSide(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

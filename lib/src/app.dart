@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 
 import 'core/services/settings_service.dart';
 import 'core/themes/app_theme.dart';
+import 'core/utils/app_navigator.dart';
 import 'features/auth/pages/initial_setup_page.dart';
-import 'features/profile/screens/profile_screen.dart';
-import 'features/search/screens/search_screen.dart';
+import 'features/profile/pages/profile_page.dart';
+import 'features/search/pages/search_page.dart';
 import 'features/settings/pages/settings_page.dart';
 
 class SwiftyCompanionApp extends StatelessWidget {
@@ -27,6 +28,7 @@ class SwiftyCompanionApp extends StatelessWidget {
       title: 'Swifty Companion',
       debugShowCheckedModeBanner: false,
       theme: AppTheme().darkTheme,
+      navigatorKey: AppNavigator.navigatorKey,
       home: const SplashScreen(),
       routes: {
         '/home': (context) => const SearchScreen(),
