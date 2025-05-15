@@ -41,7 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 300), // Reduced from 800
       vsync: this,
     );
 
@@ -213,6 +213,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             child: CachedNetworkImage(
               imageUrl: _coalition!.coverUrl!,
               fit: BoxFit.cover,
+              memCacheWidth: 600,
+              fadeInDuration: const Duration(milliseconds: 200),
               color: Colors.black.withValues(alpha: 0.3),
               colorBlendMode: BlendMode.darken,
             ),

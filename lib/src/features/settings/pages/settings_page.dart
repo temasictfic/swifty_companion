@@ -23,6 +23,7 @@ class SettingsPageState extends State<SettingsPage> {
   bool _isLoading = false;
   DateTime? _lastConfiguredDate;
   bool _hasCredentials = false;
+  bool _isPerformanceMode = false;
 
   @override
   void initState() {
@@ -36,10 +37,12 @@ class SettingsPageState extends State<SettingsPage> {
     try {
       final isConfigured = await _settingsService.isConfigured();
       final lastConfigured = await _settingsService.getLastConfiguredDate();
+      final performanceMode = await _settingsService.isPerformanceMode;
       
       setState(() {
         _hasCredentials = isConfigured;
         _lastConfiguredDate = lastConfigured;
+        _isPerformanceMode = performanceMode;
       });
     } catch (e) {
       _showError('Failed to load settings: $e');
@@ -287,6 +290,41 @@ class SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ],
+                const SizedBox(height: 24),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.speed,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Performance',
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        SwitchListTile(
+                          title: const Text('Performance Mode'),
+                          subtitle: const Text('Disable visual effects for better performance'),
+                          value: _isPerformanceMode,
+                          onChanged: (value) async {
+                            setState(() => _isPerformanceMode = value);
+                            await _settingsService.setPerformanceMode(value);
+                            _showSuccess('Performance mode ${value ? 'enabled' : 'disabled'}');
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

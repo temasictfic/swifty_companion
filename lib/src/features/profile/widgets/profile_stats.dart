@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/coalition_model.dart';
 import '../../../core/models/coalition_user_model.dart';
 import '../../../core/models/user_model.dart';
-import '../../../shared/widgets/glass_container.dart';
+import '../../../shared/widgets/optimized_glass_container.dart';
 
 class ProfileStats extends StatelessWidget {
   const ProfileStats({
@@ -18,7 +18,7 @@ class ProfileStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
+    return OptimizedGlassContainer(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,

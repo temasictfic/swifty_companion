@@ -9,7 +9,7 @@ import '../../../core/models/user_model.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../shared/widgets/animated_search_bar.dart';
-import '../../../shared/widgets/glass_container.dart';
+import '../../../shared/widgets/optimized_glass_container.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -343,6 +343,8 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       itemCount: _searchResults.length,
+      itemExtent: 90, // Fixed item height for better performance
+      cacheExtent: 200, // Reduce cache extent
       itemBuilder: (context, index) {
         final user = _searchResults[index];
 
@@ -355,19 +357,23 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               child: InkWell(
                 onTap: () => _navigateToProfile(user),
                 borderRadius: BorderRadius.circular(16),
-                child: GlassContainer(
+                child: OptimizedGlassContainer(
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
                       // User avatar
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
+                      ClipOval(
                         child: CachedNetworkImage(
                           imageUrl: user.imageUrl ?? '',
                           width: 50,
                           height: 50,
                           fit: BoxFit.cover,
+                          memCacheWidth: 150, // Increased for better quality
+                          memCacheHeight: 150,
+                          fadeInDuration: const Duration(milliseconds: 200),
                           placeholder: (context, url) => Container(
+                            width: 50,
+                            height: 50,
                             color: Colors.white.withValues(alpha: 0.1),
                             child: Center(
                               child: CircularProgressIndicator(
@@ -379,6 +385,8 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                             ),
                           ),
                           errorWidget: (context, url, error) => Container(
+                            width: 50,
+                            height: 50,
                             color: Colors.white.withValues(alpha: 0.1),
                             child: const Icon(
                               Icons.person,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../shared/widgets/glass_container.dart';
+import '../../../shared/widgets/optimized_glass_container.dart';
 
 class ProfileSection extends StatelessWidget {
   const ProfileSection({
@@ -11,7 +11,7 @@ class ProfileSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
+    return OptimizedGlassContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

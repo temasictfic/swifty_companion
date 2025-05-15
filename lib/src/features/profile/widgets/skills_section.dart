@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/user_model.dart';
-import '../../../shared/widgets/glass_container.dart';
+import '../../../shared/widgets/optimized_glass_container.dart';
 
 class SkillsSection extends StatelessWidget {
   const SkillsSection({
@@ -28,7 +28,7 @@ class SkillsSection extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: GlassContainer(
+      child: OptimizedGlassContainer(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -86,7 +86,7 @@ class SkillsSection extends StatelessWidget {
   }
 
   Widget _buildEmptyState() {
-    return GlassContainer(
+    return OptimizedGlassContainer(
       child: Column(
         children: [
           Icon(

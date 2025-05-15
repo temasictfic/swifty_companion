@@ -53,6 +53,9 @@ class ProfileHeader extends StatelessWidget {
                     child: CachedNetworkImage(
                       imageUrl: user.imageUrl ?? '',
                       fit: BoxFit.cover,
+                      memCacheWidth: 360, // Higher quality for profile header
+                      memCacheHeight: 360,
+                      fadeInDuration: const Duration(milliseconds: 200),
                       placeholder: (context, url) => Container(
                         color: Colors.white.withValues(alpha: 0.1),
                       ),

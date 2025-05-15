@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/project_model.dart';
-import '../../../shared/widgets/glass_container.dart';
+import '../../../shared/widgets/optimized_glass_container.dart';
 
 class ProjectsSection extends StatelessWidget {
   const ProjectsSection({
@@ -33,7 +33,7 @@ class ProjectsSection extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: GlassContainer(
+      child: OptimizedGlassContainer(
         child: Row(
           children: [
             // Project status indicator
@@ -169,7 +169,7 @@ class ProjectsSection extends StatelessWidget {
   }
 
   Widget _buildEmptyState() {
-    return GlassContainer(
+    return OptimizedGlassContainer(
       child: Column(
         children: [
           Icon(

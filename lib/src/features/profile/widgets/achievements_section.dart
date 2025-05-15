@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../../core/models/user_model.dart';
-import '../../../shared/widgets/glass_container.dart';
+import '../../../shared/widgets/optimized_glass_container.dart';
 
 class AchievementsSection extends StatelessWidget {
   const AchievementsSection({
@@ -36,7 +36,7 @@ class AchievementsSection extends StatelessWidget {
         ? Color(int.parse('0xFF${coalitionColor!.replaceAll('#', '')}'))
         : const Color(0xFF00BABC);
 
-    return GlassContainer(
+    return OptimizedGlassContainer(
       padding: const EdgeInsets.all(16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -97,7 +97,7 @@ class AchievementsSection extends StatelessWidget {
   }
 
   Widget _buildEmptyState() {
-    return GlassContainer(
+    return OptimizedGlassContainer(
       child: Column(
         children: [
           Icon(

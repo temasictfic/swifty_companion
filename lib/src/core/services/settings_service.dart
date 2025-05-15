@@ -11,6 +11,7 @@ class SettingsService {
   // Keys for shared preferences
   static const String _isConfiguredKey = 'is_configured';
   static const String _lastConfiguredAtKey = 'last_configured_at';
+  static const String _performanceModeKey = 'performance_mode';
   
   // Singleton instance
   static final SettingsService _instance = SettingsService._internal();
@@ -107,5 +108,17 @@ class SettingsService {
     // This is a placeholder - you should implement actual validation
     // by making a test API call to verify the credentials work
     return clientId.isNotEmpty && clientSecret.isNotEmpty;
+  }
+  
+  /// Get performance mode setting
+  Future<bool> get isPerformanceMode async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_performanceModeKey) ?? false;
+  }
+  
+  /// Set performance mode
+  Future<void> setPerformanceMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_performanceModeKey, value);
   }
 }
