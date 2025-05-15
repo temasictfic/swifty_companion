@@ -14,7 +14,7 @@ class ApiService {
   
   /// Generic GET request method with automatic token refresh
   Future<dynamic> _get(String endpoint) async {
-    print('Making request to: $_baseUrl$endpoint');
+    //print('Making request to: $_baseUrl$endpoint');
     
     var token = await _authService.getAccessToken();
     
@@ -26,11 +26,11 @@ class ApiService {
       },
     );
     
-    print('Response status: ${response.statusCode}');
+    //print('Response status: ${response.statusCode}');
     
     // If unauthorized, refresh token and retry
     if (response.statusCode == 401) {
-      print('Token expired, refreshing...');
+      //print('Token expired, refreshing...');
       token = await _authService.refreshToken();
       response = await http.get(
         Uri.parse('$_baseUrl$endpoint'),
@@ -39,13 +39,13 @@ class ApiService {
           'Content-Type': 'application/json',
         },
       );
-      print('Retry response status: ${response.statusCode}');
+      //print('Retry response status: ${response.statusCode}');
     }
     
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      print('Error response body: ${response.body}');
+      //print('Error response body: ${response.body}');
       throw Exception('Failed to load data: ${response.statusCode}');
     }
   }
@@ -70,11 +70,11 @@ class ApiService {
   /// Get detailed user information
   Future<UserModel> getUserDetails(String login) async {
     try {
-      print('Getting user details for: $login');
+      //print('Getting user details for: $login');
       final data = await _get('/users/$login');
       return UserModel.fromJson(data as Map<String, dynamic>);
     } catch (e) {
-      print('Error in getUserDetails: $e');
+      //print('Error in getUserDetails: $e');
       throw Exception('Failed to get user details: $e');
     }
   }
@@ -150,7 +150,7 @@ class ApiService {
       }
       return null;
     } catch (e) {
-      print('Error getting coalition user data: $e');
+      //print('Error getting coalition user data: $e');
       return null;
     }
   }

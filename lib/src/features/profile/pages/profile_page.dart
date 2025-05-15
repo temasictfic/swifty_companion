@@ -87,11 +87,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       // Load coalition and coalition user data in parallel
       final results = await Future.wait([
         apiService.getUserCoalition(login).catchError((e) {
-          print('Error getting coalition: $e');
+          //print('Error getting coalition: $e');
           return null;
         }),
         apiService.getUserCoalitionUser(login).catchError((e) {
-          print('Error getting coalition user: $e');
+          //print('Error getting coalition user: $e');
           return null;
         }),
       ], eagerError: false);
@@ -106,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       // Load projects to get active projects count
       await _loadProjects(login);
     } catch (e) {
-      print('Error loading user data: $e');
+      //print('Error loading user data: $e');
       setState(() {
         _errorMessage = 'Failed to load user data: ${e.toString()}';
       });
