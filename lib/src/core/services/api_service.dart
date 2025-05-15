@@ -101,8 +101,27 @@ class ApiService {
     try {
       final data = await _get('/users/$login/coalitions');
       if (data is List && data.isNotEmpty) {
-        // Get the most recent coalition
-        return CoalitionModel.fromJson(data.last as Map<String, dynamic>);
+        final coalitions = data;
+        
+        // First priority: Find a coalition with the slug containing "42" and has a cover_url
+        for (final coalition in coalitions) {
+          final slug = coalition['slug'] as String? ?? '';
+          final coverUrl = coalition['cover_url'] as String? ?? '';
+          
+          if ((slug.contains('42') || !slug.contains('piscine')) && coverUrl.isNotEmpty) {
+            return CoalitionModel.fromJson(coalition as Map<String, dynamic>);
+          }
+        }
+        
+        // Second priority: Any coalition with a cover_url (active coalitions)
+        for (final coalition in coalitions) {
+          if (coalition['cover_url'] != null && coalition['cover_url'].toString().isNotEmpty) {
+            return CoalitionModel.fromJson(coalition as Map<String, dynamic>);
+          }
+        }
+        
+        // Last resort: Return the last coalition
+        return CoalitionModel.fromJson(coalitions.last as Map<String, dynamic>);
       }
       return null;
     } catch (e) {
@@ -115,8 +134,16 @@ class ApiService {
     try {
       final data = await _get('/users/$login/coalitions_users');
       if (data is List && data.isNotEmpty) {
-        // Get the first coalition user data (should typically only be one)
-        return CoalitionUserModel.fromJson(data.first as Map<String, dynamic>);
+        // Find the coalition user data that matches the active coalition
+        // Typically this is the one with the highest score or most recent
+        final sortedData = List<Map<String, dynamic>>.from(data)
+          ..sort((a, b) {
+            final scoreA = (a['score'] as num?)?.toInt() ?? 0;
+            final scoreB = (b['score'] as num?)?.toInt() ?? 0;
+            return scoreB.compareTo(scoreA);
+          });
+        
+        return CoalitionUserModel.fromJson(sortedData.first);
       } else if (data is Map<String, dynamic>) {
         // In case the API returns a single object
         return CoalitionUserModel.fromJson(data);

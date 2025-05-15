@@ -81,9 +81,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       // Load user details
       _user = await apiService.getUserDetails(login);
       
-      setState(() {});
+      // Force rebuild to show user data immediately
+      if (mounted) setState(() {});
       
-      // Load coalition and coalition user data in parallel (with error handling for each)
+      // Load coalition and coalition user data in parallel
       final results = await Future.wait([
         apiService.getUserCoalition(login).catchError((e) {
           print('Error getting coalition: $e');
@@ -95,10 +96,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         }),
       ], eagerError: false);
 
-      setState(() {
-        _coalition = results[0] as CoalitionModel?;
-        _coalitionUser = results[1] as CoalitionUserModel?;
-      });
+      if (mounted) {
+        setState(() {
+          _coalition = results[0] as CoalitionModel?;
+          _coalitionUser = results[1] as CoalitionUserModel?;
+        });
+      }
 
       // Load projects to get active projects count
       await _loadProjects(login);
@@ -108,9 +111,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         _errorMessage = 'Failed to load user data: ${e.toString()}';
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
