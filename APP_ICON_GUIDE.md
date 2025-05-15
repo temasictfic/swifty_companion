@@ -19,8 +19,9 @@
 
 2. Run these commands:
    ```bash
-   flutter pub get
-   flutter pub run flutter_launcher_icons:main
+   dart run flutter_launcher_icons
+   flutter clean
+   flutter build apk
    ```
 
 3. The package will generate all required icon sizes for both Android and iOS
