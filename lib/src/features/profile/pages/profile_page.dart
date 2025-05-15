@@ -185,13 +185,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          if (_user != null)
-            IconButton(
-              icon: const Icon(Icons.share),
-              onPressed: () => _shareProfile(),
-            ),
-        ],
         systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
       body: _buildBody(),
@@ -430,13 +423,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           ),
         ],
       ),
-    );
-  }
-
-  void _shareProfile() {
-    // Implement share functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Share functionality coming soon!')),
     );
   }
 }
