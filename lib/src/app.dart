@@ -9,8 +9,8 @@ import 'features/profile/pages/profile_page.dart';
 import 'features/search/pages/search_page.dart';
 import 'features/settings/pages/settings_page.dart';
 
-class SwiftyCompanionApp extends StatelessWidget {
-  const SwiftyCompanionApp({super.key});
+class FlutteryMateApp extends StatelessWidget {
+  const FlutteryMateApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class SwiftyCompanionApp extends StatelessWidget {
     );
 
     return MaterialApp(
-      title: 'Swifty Companion',
+      title: 'Fluttery Mate',
       debugShowCheckedModeBanner: false,
       theme: AppTheme().darkTheme,
       navigatorKey: AppNavigator.navigatorKey,
@@ -103,7 +103,7 @@ class SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Swifty Companion',
+                'Fluttery Mate',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                   color: Theme.of(context).colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,

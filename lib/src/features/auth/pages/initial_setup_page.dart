@@ -32,7 +32,7 @@ class InitialSetupPage extends StatelessWidget {
               
               // Welcome Text
               Text(
-                'Welcome to Swifty Companion',
+                'Welcome to Fluttery Mate',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

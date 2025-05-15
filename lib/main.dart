@@ -14,7 +14,7 @@ void main() async {
         Provider(create: (_) => AuthService()),
         Provider(create: (_) => ApiService()),
       ],
-      child: const SwiftyCompanionApp(),
+      child: const FlutteryMateApp(),
     ),
   );
 }

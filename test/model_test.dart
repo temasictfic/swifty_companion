@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:swifty_companion/src/core/models/coalition_model.dart';
-import 'package:swifty_companion/src/core/models/project_model.dart';
-import 'package:swifty_companion/src/core/models/user_model.dart';
+import 'package:fluttery_mate/src/core/models/coalition_model.dart';
+import 'package:fluttery_mate/src/core/models/project_model.dart';
+import 'package:fluttery_mate/src/core/models/user_model.dart';
 
 void main() {
   group('UserModel', () {

@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "swifty_companion" "\0"
+            VALUE "FileDescription", "fluttery_mate" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "swifty_companion" "\0"
+            VALUE "InternalName", "fluttery_mate" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "swifty_companion.exe" "\0"
-            VALUE "ProductName", "swifty_companion" "\0"
+            VALUE "OriginalFilename", "fluttery_mate.exe" "\0"
+            VALUE "ProductName", "fluttery_mate" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

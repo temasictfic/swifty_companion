@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:swifty_companion/src/shared/widgets/glass_container.dart';
+import 'package:fluttery_mate/src/shared/widgets/glass_container.dart';
 
 void main() {
   testWidgets('GlassContainer renders correctly', (WidgetTester tester) async {

@@ -148,7 +148,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  'Swifty Companion',
+                                  'Fluttery Mate',
                                   style: TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
