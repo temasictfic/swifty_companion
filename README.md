@@ -10,6 +10,10 @@ A modern Flutter application for browsing 42 student profiles using the 42 API.
 - 🎨 Modern, dark-themed UI
 - 🔐 Secure credential management
 
+## App Screenshots
+
+![Fluttery Mate](ss/app.jpg)
+
 ## Getting Started
 
 ### Prerequisites
