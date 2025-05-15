@@ -343,8 +343,8 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       itemCount: _searchResults.length,
-      itemExtent: 90, // Fixed item height for better performance
-      cacheExtent: 200, // Reduce cache extent
+      // Remove the fixed itemExtent to allow dynamic sizing
+      cacheExtent: 200,
       itemBuilder: (context, index) {
         final user = _searchResults[index];
 
@@ -368,7 +368,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                           width: 50,
                           height: 50,
                           fit: BoxFit.cover,
-                          memCacheWidth: 150, // Increased for better quality
+                          memCacheWidth: 150,
                           memCacheHeight: 150,
                           fadeInDuration: const Duration(milliseconds: 200),
                           placeholder: (context, url) => Container(
@@ -398,9 +398,10 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                       ),
                       const SizedBox(width: 12),
 
-                      // User info
+                      // User info - Fix the overflow by using Expanded properly
                       Expanded(
                         child: Column(
+                          mainAxisSize: MainAxisSize.min, // Add this line to fix overflow
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
@@ -413,7 +414,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 4), // Increased from 2 to 4
                             Text(
                               user.login,
                               style: TextStyle(
