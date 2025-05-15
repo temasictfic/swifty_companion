@@ -1,13 +1,18 @@
 name: Build and Release
 
 on:
+  # Build on tags that start with 'v'
   push:
-    branches: [ main ]
     tags:
       - 'v*'
-  pull_request:
-    branches: [ main ]
+  # Allow manual trigger
   workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a GitHub release?'
+        required: true
+        default: 'false'
+        type: boolean
 
 # Add permissions needed for creating releases
 permissions:
@@ -56,10 +61,16 @@ jobs:
         name: app-release-aab
         path: build/app/outputs/bundle/release/app-release.aab
 
-    - name: Create GitHub Release
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: ncipollo/release-action@v1
+    # Only run the release steps on tag push or if requested manually
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.create_release == 'true'
+      uses: softprops/action-gh-release@v1
       with:
-        artifacts: "build/app/outputs/flutter-apk/app-release.apk,build/app/outputs/bundle/release/app-release.aab"
-        bodyFile: RELEASE_NOTES.md
-        token: ${{ secrets.GITHUB_TOKEN }}
+        files: |
+          build/app/outputs/flutter-apk/app-release.apk
+          build/app/outputs/bundle/release/app-release.aab
+        body_path: RELEASE_NOTES.md
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
