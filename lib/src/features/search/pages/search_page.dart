@@ -361,11 +361,11 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                     children: [
                       // User avatar
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(40),
+                        borderRadius: BorderRadius.circular(30),
                         child: CachedNetworkImage(
                           imageUrl: user.imageUrl ?? '',
-                          width: 60,
-                          height: 60,
+                          width: 50,
+                          height: 50,
                           fit: BoxFit.cover,
                           placeholder: (context, url) => Container(
                             color: Colors.white.withValues(alpha: 0.1),
@@ -383,12 +383,12 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                             child: const Icon(
                               Icons.person,
                               color: Colors.white54,
-                              size: 30,
+                              size: 25,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 12),
 
                       // User info
                       Expanded(
@@ -398,28 +398,35 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                             Text(
                               user.displayName,
                               style: const TextStyle(
-                                fontSize: 18,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               user.login,
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13,
                                 color: Colors.white.withValues(alpha: 0.7),
                               ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
                           ],
                         ),
                       ),
 
                       // Arrow indicator
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.white.withValues(alpha: 0.5),
-                        size: 20,
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Icon(
+                          Icons.arrow_forward_ios,
+                          color: Colors.white.withValues(alpha: 0.5),
+                          size: 16,
+                        ),
                       ),
                     ],
                   ),
