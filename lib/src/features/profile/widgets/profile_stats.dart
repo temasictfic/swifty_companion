@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/models/coalition_model.dart';
+import '../../../core/models/coalition_user_model.dart';
 import '../../../core/models/user_model.dart';
 import '../../../shared/widgets/glass_container.dart';
 
 class ProfileStats extends StatelessWidget {
   const ProfileStats({
-    required this.user, super.key,
+    required this.user,
+    super.key,
     this.coalition,
+    this.coalitionUser,
   });
   final UserModel user;
   final CoalitionModel? coalition;
+  final CoalitionUserModel? coalitionUser;
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +36,9 @@ class ProfileStats extends StatelessWidget {
           _buildDivider(),
           _buildStatItem(
             icon: Icons.emoji_events,
-            value: coalition?.score.toString() ?? '0',
+            value: '${coalitionUser?.score ?? 0}',
             label: 'Score',
+            subtitle: coalitionUser?.rank != null ? '#${coalitionUser!.rank}' : null,
           ),
         ],
       ),
@@ -44,6 +49,7 @@ class ProfileStats extends StatelessWidget {
     required IconData icon,
     required String value,
     required String label,
+    String? subtitle,
   }) {
     return Column(
       children: [
@@ -61,6 +67,17 @@ class ProfileStats extends StatelessWidget {
             color: Colors.white,
           ),
         ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withValues(alpha: 0.9),
+            ),
+          ),
+        ],
         const SizedBox(height: 4),
         Text(
           label,

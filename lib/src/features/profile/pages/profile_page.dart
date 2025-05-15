@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/models/coalition_model.dart';
+import '../../../core/models/coalition_user_model.dart';
 import '../../../core/models/project_model.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/services/api_service.dart';
@@ -25,6 +26,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
   UserModel? _user;
   CoalitionModel? _coalition;
+  CoalitionUserModel? _coalitionUser;
   List<ProjectModel> _projects = [];
   bool _isLoading = true;
   String _errorMessage = '';
@@ -76,22 +78,34 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     try {
       final apiService = Provider.of<ApiService>(context, listen: false);
 
-      // Load user details and coalition in parallel
+      // Load user details
+      _user = await apiService.getUserDetails(login);
+      
+      setState(() {});
+      
+      // Load coalition and coalition user data in parallel (with error handling for each)
       final results = await Future.wait([
-        apiService.getUserDetails(login),
-        apiService.getUserCoalition(login),
-      ]);
+        apiService.getUserCoalition(login).catchError((e) {
+          print('Error getting coalition: $e');
+          return null;
+        }),
+        apiService.getUserCoalitionUser(login).catchError((e) {
+          print('Error getting coalition user: $e');
+          return null;
+        }),
+      ], eagerError: false);
 
       setState(() {
-        _user = results[0] as UserModel;
-        _coalition = results[1] as CoalitionModel?;
+        _coalition = results[0] as CoalitionModel?;
+        _coalitionUser = results[1] as CoalitionUserModel?;
       });
 
       // Load projects to get active projects count
       await _loadProjects(login);
     } catch (e) {
+      print('Error loading user data: $e');
       setState(() {
-        _errorMessage = 'Failed to load user data';
+        _errorMessage = 'Failed to load user data: ${e.toString()}';
       });
     } finally {
       setState(() {
@@ -123,6 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       await _loadProjects(_user!.login);
     }
   }
+
 
 
   String _getCurrentGrade() {
@@ -307,7 +322,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildInfoTab() {
     return Column(
       children: [
-        ProfileStats(user: _user!, coalition: _coalition),
+        ProfileStats(user: _user!, coalition: _coalition, coalitionUser: _coalitionUser),
         const SizedBox(height: 24),
         ProfileSection(
           title: 'Contact Information',

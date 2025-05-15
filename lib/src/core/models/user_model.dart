@@ -134,9 +134,14 @@ class CursusUser {
     required this.cursus,
     this.beginAt,
     this.endAt,
+    this.userId,
+    this.user,
   });
 
   factory CursusUser.fromJson(Map<String, dynamic> json) {
+    // Extract user data if available
+    final userData = json['user'] as Map<String, dynamic>?;
+    
     return CursusUser(
       id: json['id'] as int,
       grade: json['grade'] as String?,
@@ -145,6 +150,8 @@ class CursusUser {
       beginAt: json['begin_at'] != null ? DateTime.parse(json['begin_at'].toString()) : null,
       endAt: json['end_at'] != null ? DateTime.parse(json['end_at'].toString()) : null,
       cursus: json['cursus'] != null ? Cursus.fromJson(json['cursus'] as Map<String, dynamic>) : null,
+      userId: userData?['id'] as int?,
+      user: userData,
     );
   }
 
@@ -155,6 +162,8 @@ class CursusUser {
   final DateTime? beginAt;
   final DateTime? endAt;
   final Cursus? cursus;
+  final int? userId;
+  final Map<String, dynamic>? user;
 }
 
 class Cursus {

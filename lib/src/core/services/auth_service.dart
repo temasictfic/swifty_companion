@@ -21,16 +21,20 @@ class AuthService {
 
   /// Get API credentials from settings only
   Future<Map<String, String>> _getApiCredentials() async {
+    print('Getting API credentials...');
+    
     // Get credentials from secure storage
     final credentials = await _settingsService.getCredentials();
     
     if (credentials['clientId'] != null && credentials['clientSecret'] != null) {
+      print('Got credentials from secure storage');
       return {
         'clientId': credentials['clientId']!,
         'clientSecret': credentials['clientSecret']!,
       };
     }
     
+    print('No credentials in secure storage');
     throw Exception('No API credentials found. Please configure them in settings.');
   }
 
