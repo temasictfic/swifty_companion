@@ -1,15 +1,16 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../app.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../shared/widgets/animated_search_bar.dart';
-import '../../../shared/widgets/optimized_glass_container.dart';
+import '../../../shared/widgets/surface_card.dart';
+import '../../../shared/widgets/user_avatar.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -18,433 +19,316 @@ class SearchScreen extends StatefulWidget {
   State<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderStateMixin {
+enum _SearchStatus { idle, tooShort, loading, results, empty, error }
+
+class _SearchScreenState extends State<SearchScreen> {
+  static const _minChars = 2;
+  static const _debounce = Duration(milliseconds: 400);
+
   final TextEditingController _searchController = TextEditingController();
-  final List<UserModel> _searchResults = [];
-  Timer? _searchDebouncer;
-  bool _isSearching = false;
+  Timer? _debouncer;
+  List<UserModel> _results = const [];
+  _SearchStatus _status = _SearchStatus.idle;
   String _errorMessage = '';
 
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _animationController.forward();
-  }
+  /// Incremented per search; responses from older searches are ignored so a
+  /// slow earlier request can't overwrite newer results.
+  int _searchId = 0;
 
   @override
   void dispose() {
+    _debouncer?.cancel();
     _searchController.dispose();
-    _searchDebouncer?.cancel();
-    _animationController.dispose();
     super.dispose();
   }
 
-  void _onSearchChanged(String query) {
-    if (_searchDebouncer?.isActive ?? false) {
-      _searchDebouncer!.cancel();
+  void _onSearchChanged(String value) {
+    _debouncer?.cancel();
+    final query = value.trim();
+
+    if (query.isEmpty || query.length < _minChars) {
+      _searchId++; // cancel any pending result
+      setState(() {
+        _results = const [];
+        _status = query.isEmpty ? _SearchStatus.idle : _SearchStatus.tooShort;
+      });
+      return;
     }
 
-    _searchDebouncer = Timer(const Duration(milliseconds: 500), () {
-      if (query.length >= 2) {
-        _performSearch(query);
-      } else {
-        setState(() {
-          _searchResults.clear();
-          _errorMessage = '';
-        });
-      }
-    });
+    if (_status != _SearchStatus.loading && _status != _SearchStatus.results) {
+      setState(() => _status = _SearchStatus.loading);
+    }
+    _debouncer = Timer(_debounce, () => _performSearch(query));
+  }
+
+  void _onSubmitted(String value) {
+    _debouncer?.cancel();
+    final query = value.trim();
+    if (query.length >= _minChars) _performSearch(query);
   }
 
   Future<void> _performSearch(String query) async {
-    setState(() {
-      _isSearching = true;
-      _errorMessage = '';
-    });
+    final id = ++_searchId;
+    setState(() => _status = _SearchStatus.loading);
 
     try {
-      final apiService = Provider.of<ApiService>(context, listen: false);
-      final results = await apiService.searchUsers(query.trim());
-
+      final results = await context.read<ApiService>().searchUsers(query);
+      if (!mounted || id != _searchId) return;
       setState(() {
-        _searchResults
-          ..clear()
-          ..addAll(results);
-        if (results.isEmpty) {
-          _errorMessage = 'No users found for "$query"';
-        }
+        _results = results;
+        _status = results.isEmpty ? _SearchStatus.empty : _SearchStatus.results;
       });
     } catch (e) {
+      if (!mounted || id != _searchId) return;
       setState(() {
-        _errorMessage = 'Failed to search users. Please try again.';
-      });
-    } finally {
-      setState(() {
-        _isSearching = false;
+        _errorMessage = 'Failed to search users.\n$e';
+        _status = _SearchStatus.error;
       });
     }
-  }
-
-  void _navigateToProfile(UserModel user) {
-    Navigator.pushNamed(
-      context,
-      '/profile',
-      arguments: user.login,
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background gradient
-          Container(
-            decoration: BoxDecoration(
-              gradient: AppTheme().darkGradient,
-            ),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              const _Header(),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: AnimatedSearchBar(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  onSubmitted: _onSubmitted,
+                  hintText: 'Search by login...',
+                ),
+              ),
+              const SizedBox(height: 24),
+              Expanded(child: _buildResults()),
+            ],
           ),
-
-          // Main content
-          SafeArea(
-            child: Column(
-              children: [
-                // Header with animated title and settings button
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Fluttery Mate',
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                ShaderMask(
-                                  shaderCallback: (bounds) =>
-                                      AppTheme().primaryGradient.createShader(bounds),
-                                  child: const Text(
-                                    'Find any 42 student',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.settings,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/settings');
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Search bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: AnimatedSearchBar(
-                    controller: _searchController,
-                    onChanged: _onSearchChanged,
-                    hintText: 'Search by login...',
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Results section
-                Expanded(
-                  child: _buildResultsSection(),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildResultsSection() {
-    if (_searchController.text.isEmpty) {
-      return _buildEmptyState();
-    }
-
-    if (_searchController.text.length < 2) {
-      return _buildMinCharsMessage();
-    }
-
-    if (_isSearching) {
-      return _buildLoadingState();
-    }
-
-    if (_errorMessage.isNotEmpty) {
-      return _buildErrorState();
-    }
-
-    if (_searchResults.isEmpty) {
-      return _buildNoResultsState();
-    }
-
-    return _buildResultsList();
+  Widget _buildResults() {
+    return switch (_status) {
+      _SearchStatus.idle => const _Message(
+        icon: Icons.search,
+        text: 'Start typing to search',
+      ),
+      _SearchStatus.tooShort => const _Message(
+        text: 'Please enter at least 2 characters',
+      ),
+      _SearchStatus.loading => const _LoadingList(),
+      _SearchStatus.empty => const _Message(
+        icon: Icons.search_off,
+        text: 'No results found',
+      ),
+      _SearchStatus.error => _Message(
+        icon: Icons.error_outline,
+        iconColor: AppTheme.errorColor,
+        text: _errorMessage,
+      ),
+      _SearchStatus.results => ListView.builder(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          0,
+          24,
+          24 + MediaQuery.paddingOf(context).bottom,
+        ),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        itemCount: _results.length,
+        itemBuilder: (context, index) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _UserTile(user: _results[index]),
+        ),
+      ),
+    };
   }
+}
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+class _Header extends StatelessWidget {
+  const _Header();
+
+  @override
+  Widget build(BuildContext context) {
+    // RepaintBoundary: the header never changes, so it is painted once and
+    // reused while the list/shimmer below animates.
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Row(
           children: [
-            Icon(
-              Icons.search,
-              size: 80,
-              color: Colors.white.withValues(alpha: 0.3),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Start typing to search',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.5),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Fluttery Mate',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
+                  const SizedBox(height: 8),
+                  ShaderMask(
+                    shaderCallback: AppTheme.primaryGradient.createShader,
+                    child: const Text(
+                      'Find any 42 student',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings, color: Colors.white, size: 28),
+              tooltip: 'Settings',
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildMinCharsMessage() {
-    return Center(
-      child: Text(
-        'Please enter at least 2 characters',
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.white.withValues(alpha: 0.5),
-            ),
-      ),
-    );
-  }
+class _UserTile extends StatelessWidget {
+  const _UserTile({required this.user});
 
-  Widget _buildLoadingState() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Shimmer.fromColors(
-            baseColor: Colors.white.withValues(alpha: 0.1),
-            highlightColor: Colors.white.withValues(alpha: 0.2),
-            child: Container(
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
+  final UserModel user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () =>
+            Navigator.pushNamed(context, AppRoutes.profile, arguments: user),
+        child: SurfaceCard(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Hero(
+                tag: 'avatar-${user.login}',
+                child: UserAvatar(imageUrl: user.smallImageUrl, size: 50),
               ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildErrorState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 80,
-            color: AppTheme().errorColor.withValues(alpha: 0.7),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _errorMessage,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.7),
-                ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNoResultsState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.search_off,
-            size: 80,
-            color: Colors.white.withValues(alpha: 0.3),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No results found',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.5),
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResultsList() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      itemCount: _searchResults.length,
-      // Remove the fixed itemExtent to allow dynamic sizing
-      cacheExtent: 200,
-      itemBuilder: (context, index) {
-        final user = _searchResults[index];
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Hero(
-            tag: 'user-${user.login}',
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => _navigateToProfile(user),
-                borderRadius: BorderRadius.circular(16),
-                child: OptimizedGlassContainer(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      // User avatar
-                      ClipOval(
-                        child: CachedNetworkImage(
-                          imageUrl: user.imageUrl ?? '',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                          memCacheWidth: 150,
-                          memCacheHeight: 150,
-                          fadeInDuration: const Duration(milliseconds: 200),
-                          placeholder: (context, url) => Container(
-                            width: 50,
-                            height: 50,
-                            color: Colors.white.withValues(alpha: 0.1),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppTheme().primaryColor,
-                                ),
-                              ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            width: 50,
-                            height: 50,
-                            color: Colors.white.withValues(alpha: 0.1),
-                            child: const Icon(
-                              Icons.person,
-                              color: Colors.white54,
-                              size: 25,
-                            ),
-                          ),
-                        ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.displayName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
                       ),
-                      const SizedBox(width: 12),
-
-                      // User info - Fix the overflow by using Expanded properly
-                      Expanded(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min, // Add this line to fix overflow
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user.displayName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                            const SizedBox(height: 4), // Increased from 2 to 4
-                            Text(
-                              user.login,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.white.withValues(alpha: 0.7),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ],
-                        ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user.login,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.white70,
                       ),
-
-                      // Arrow indicator
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: Icon(
-                          Icons.arrow_forward_ios,
-                          color: Colors.white.withValues(alpha: 0.5),
-                          size: 16,
-                        ),
-                      ),
-                    ],
-                  ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
                 ),
               ),
+              const Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white54,
+                  size: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoadingList extends StatelessWidget {
+  const _LoadingList();
+
+  @override
+  Widget build(BuildContext context) {
+    // A single Shimmer around the whole list (one animation instead of five),
+    // isolated so its per-frame repaint doesn't repaint the rest of the screen.
+    return RepaintBoundary(
+      child: Shimmer.fromColors(
+        baseColor: const Color(0x1AFFFFFF),
+        highlightColor: const Color(0x33FFFFFF),
+        child: ListView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          itemCount: 5,
+          itemBuilder: (_, _) => Container(
+            height: 80,
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+}
+
+class _Message extends StatelessWidget {
+  const _Message({required this.text, this.icon, this.iconColor});
+
+  final String text;
+  final IconData? icon;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 80,
+                color: iconColor?.withValues(alpha: 0.7) ?? Colors.white30,
+              ),
+              const SizedBox(height: 16),
+            ],
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, color: Colors.white54),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

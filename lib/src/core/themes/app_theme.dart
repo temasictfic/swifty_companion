@@ -1,62 +1,61 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
-class AppTheme {
-  factory AppTheme() => _instance;
-  AppTheme._internal();
-    // Singleton pattern (optional)
-  static final AppTheme _instance = AppTheme._internal();
-  
-  // Modern color palette
-  final Color primaryColor = const Color(0xFF00BABC);
-  final Color secondaryColor = const Color(0xFF8B5CF6);
-  final Color backgroundColor = const Color(0xFF0F0F0F);
-  final Color surfaceColor = const Color(0xFF1A1A1A);
-  final Color cardColor = const Color(0xFF1F1F1F);
-  final Color errorColor = const Color(0xFFEF4444);
-  final Color successColor = const Color(0xFF10B981);
-  
-  // Gradient colors
-  LinearGradient get primaryGradient => LinearGradient(
+/// App colours and the (single, dark) theme.
+///
+/// Everything is `static const` / `static final` so it is built once instead of
+/// on every `build` call.
+abstract final class AppTheme {
+  static const Color primaryColor = Color(0xFF00BABC);
+  static const Color secondaryColor = Color(0xFF8B5CF6);
+  static const Color backgroundColor = Color(0xFF0F0F0F);
+  static const Color surfaceColor = Color(0xFF1A1A1A);
+  static const Color cardColor = Color(0xFF1F1F1F);
+  static const Color errorColor = Color(0xFFEF4444);
+  static const Color successColor = Color(0xFF10B981);
+  static const Color excellentColor = Color(0xFFFFD700);
+
+  static const LinearGradient primaryGradient = LinearGradient(
     colors: [primaryColor, secondaryColor],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
-  LinearGradient get darkGradient => const LinearGradient(
+
+  static const LinearGradient darkGradient = LinearGradient(
     colors: [Color(0xFF1A1A1A), Color(0xFF0A0A0A)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
 
-  ThemeData get darkTheme => ThemeData(
+  static final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     fontFamily: 'Inter',
     primaryColor: primaryColor,
     scaffoldBackgroundColor: backgroundColor,
-    
-    // AppBar theme
+    colorScheme: const ColorScheme.dark(
+      primary: primaryColor,
+      onPrimary: Colors.white,
+      secondary: secondaryColor,
+      surface: surfaceColor,
+      error: errorColor,
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
       elevation: 0,
       centerTitle: true,
       titleTextStyle: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: Colors.white,
       ),
       iconTheme: IconThemeData(color: Colors.white),
     ),
-    
-    // Card theme
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: cardColor,
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
-    
-    // Text theme
     textTheme: const TextTheme(
       headlineLarge: TextStyle(
         fontSize: 32,
@@ -73,21 +72,10 @@ class AppTheme {
         fontWeight: FontWeight.w600,
         color: Colors.white,
       ),
-      bodyLarge: TextStyle(
-        fontSize: 16,
-        color: Colors.white,
-      ),
-      bodyMedium: TextStyle(
-        fontSize: 14,
-        color: Colors.white70,
-      ),
-      bodySmall: TextStyle(
-        fontSize: 12,
-        color: Colors.white60,
-      ),
+      bodyLarge: TextStyle(fontSize: 16, color: Colors.white),
+      bodyMedium: TextStyle(fontSize: 14, color: Colors.white70),
+      bodySmall: TextStyle(fontSize: 12, color: Colors.white60),
     ),
-    
-    // Input decoration theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: surfaceColor,
@@ -102,48 +90,33 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: primaryColor, width: 2),
+        borderSide: const BorderSide(color: primaryColor, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: errorColor, width: 2),
+        borderSide: const BorderSide(color: errorColor, width: 2),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: errorColor, width: 2),
+        borderSide: const BorderSide(color: errorColor, width: 2),
       ),
       hintStyle: const TextStyle(color: Colors.white38),
     ),
-    
-    // Elevated button theme
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        textStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
-    
-    // Icon theme
-    iconTheme: const IconThemeData(
-      color: Colors.white,
-      size: 24,
-    ),
-    
-    // Divider theme
+    iconTheme: const IconThemeData(color: Colors.white, size: 24),
     dividerTheme: const DividerThemeData(
       color: Colors.white12,
       thickness: 1,
       space: 32,
     ),
   );
-  
 }

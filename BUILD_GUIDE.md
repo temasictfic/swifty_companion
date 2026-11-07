@@ -5,7 +5,7 @@ This guide provides instructions for building the Swifty Companion APK both loca
 ## Local Build
 
 ### Prerequisites
-- Flutter SDK (version 3.29.3 or later)
+- Flutter SDK (version 3.47 or later, Dart 3.13+)
 - Android SDK
 - JDK 17 (Java 17 is now required for Android Gradle plugin)
 
@@ -70,7 +70,7 @@ The project is set up with GitHub Actions for automated builds.
    
    If you see an error like:
    ```
-   Because fluttery_mate requires SDK version ^3.7.2, version solving failed.
+   Because fluttery_mate requires SDK version ^3.13.0, version solving failed.
    ```
    
    Make sure your Flutter version matches the requirement in pubspec.yaml:

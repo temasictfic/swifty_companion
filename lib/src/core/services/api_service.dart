@@ -1,176 +1,255 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/coalition_model.dart';
 import '../models/coalition_user_model.dart';
-import '../models/project_model.dart';
+import '../models/json_utils.dart';
 import '../models/user_model.dart';
 import 'auth_service.dart';
+import 'rate_limiter.dart';
 
+/// Coalition info shown on a profile; either part may be missing.
+typedef CoalitionInfo = ({
+  CoalitionModel? coalition,
+  CoalitionUserModel? membership,
+});
+
+/// Client for the 42 intra API (v2).
+///
+/// Performance notes:
+/// * One shared [http.Client] keeps TLS connections alive between requests
+///   (the old code opened a fresh connection — and TLS handshake — per call).
+/// * Requests are rate limited to the API's 2 req/s, and 429s are retried.
+/// * Large responses (full user profiles) are decoded off the UI isolate.
+/// * Results are cached for a few minutes, so reopening a profile is instant.
 class ApiService {
-  static const String _baseUrl = 'https://api.intra.42.fr/v2';
-  final AuthService _authService = AuthService();
-  
-  /// Generic GET request method with automatic token refresh
-  Future<dynamic> _get(String endpoint) async {
-    //print('Making request to: $_baseUrl$endpoint');
-    
-    var token = await _authService.getAccessToken();
-    
-    var response = await http.get(
-      Uri.parse('$_baseUrl$endpoint'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-    );
-    
-    //print('Response status: ${response.statusCode}');
-    
-    // If unauthorized, refresh token and retry
-    if (response.statusCode == 401) {
-      //print('Token expired, refreshing...');
-      token = await _authService.refreshToken();
-      response = await http.get(
-        Uri.parse('$_baseUrl$endpoint'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-      //print('Retry response status: ${response.statusCode}');
-    }
-    
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      //print('Error response body: ${response.body}');
-      throw Exception('Failed to load data: ${response.statusCode}');
-    }
-  }
-  
-  /// Search for users by login
+  ApiService({required this._client, required this._auth});
+
+  static const String _host = 'api.intra.42.fr';
+  static const Duration _timeout = Duration(seconds: 20);
+  static const Duration _cacheTtl = Duration(minutes: 5);
+  static const int _maxCacheEntries = 30;
+
+  /// Responses bigger than this are parsed in a background isolate.
+  static const int _isolateThreshold = 48 * 1024;
+
+  final http.Client _client;
+  final AuthService _auth;
+  final RateLimiter _limiter = RateLimiter();
+
+  /// Insertion-ordered (Dart map literals are LinkedHashMaps), used as an LRU.
+  final _cache = <String, ({DateTime at, Object? value})>{};
+  final _inFlight = <String, Future<Object?>>{};
+
+  /// Searches users whose login matches [query] (first 20 results).
   Future<List<UserModel>> searchUsers(String query) async {
-    if (query.isEmpty) {
-      return [];
-    }
-    
-    try {
-      final data = await _get('/users?search[login]=$query%&page[size]=20');
-      return (data as List)
-          .map((json) => UserModel.fromJson(json as Map<String, dynamic>))
-          .where((user) => user.imageUrl != null) // Filter out users without images
-          .toList();
-    } catch (e) {
-      throw Exception('Failed to search users: $e');
-    }
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return const [];
+    final users = await _cached<List<UserModel>>(
+      'search:$q',
+      () => _get('/v2/users', {
+        'search[login]': '$q%',
+        'page[size]': '20',
+      }, _parseUserList),
+    );
+    // Exact match first, then logins starting with the query, then the rest.
+    int rank(UserModel u) => u.login == q ? 0 : (u.login.startsWith(q) ? 1 : 2);
+    return [...users]..sort((a, b) {
+      final byRank = rank(a).compareTo(rank(b));
+      return byRank != 0 ? byRank : a.login.compareTo(b.login);
+    });
   }
-  
-  /// Get detailed user information
-  Future<UserModel> getUserDetails(String login) async {
-    try {
-      //print('Getting user details for: $login');
-      final data = await _get('/users/$login');
-      return UserModel.fromJson(data as Map<String, dynamic>);
-    } catch (e) {
-      //print('Error in getUserDetails: $e');
-      throw Exception('Failed to get user details: $e');
-    }
+
+  /// Full profile, including projects, skills and achievements (one request).
+  Future<UserModel> getUserDetails(String login, {bool forceRefresh = false}) {
+    return _cached<UserModel>(
+      'user:$login',
+      () => _get('/v2/users/${Uri.encodeComponent(login)}', null, _parseUser),
+      forceRefresh: forceRefresh,
+    );
   }
-  
-  /// Get user projects
-  Future<List<ProjectModel>> getUserProjects(String login) async {
-    try {
-      final data = await _get('/users/$login/projects_users?page[size]=100');
-      final projects = (data as List)
-          .map((json) => ProjectModel.fromJson(json as Map<String, dynamic>))
-          .toList();
-      
-      // Sort by creation date (newest first)
-      projects.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      
-      return projects;
-    } catch (e) {
-      throw Exception('Failed to get user projects: $e');
-    }
+
+  /// The user's active coalition plus their score/rank in *that* coalition.
+  Future<CoalitionInfo> getCoalitionInfo(
+    String login, {
+    bool forceRefresh = false,
+  }) {
+    return _cached<CoalitionInfo>('coalition:$login', () async {
+      final encoded = Uri.encodeComponent(login);
+      final results = await Future.wait([
+        _get('/v2/users/$encoded/coalitions', null, asMapList),
+        _get(
+          '/v2/users/$encoded/coalitions_users',
+          null,
+          asMapList,
+        ).catchError((Object _) => const <Map<String, dynamic>>[]),
+      ]);
+      final coalition = _pickCoalition(results[0]);
+      return (
+        coalition: coalition,
+        membership: _pickMembership(results[1], coalition?.id),
+      );
+    }, forceRefresh: forceRefresh);
   }
-  
-  /// Get user coalition information
-  Future<CoalitionModel?> getUserCoalition(String login) async {
-    try {
-      final data = await _get('/users/$login/coalitions');
-      if (data is List && data.isNotEmpty) {
-        final coalitions = data;
-        
-        // First priority: Find a coalition with the slug containing "42" and has a cover_url
-        for (final coalition in coalitions) {
-          final slug = coalition['slug'] as String? ?? '';
-          final coverUrl = coalition['cover_url'] as String? ?? '';
-          
-          if ((slug.contains('42') || !slug.contains('piscine')) && coverUrl.isNotEmpty) {
-            return CoalitionModel.fromJson(coalition as Map<String, dynamic>);
-          }
-        }
-        
-        // Second priority: Any coalition with a cover_url (active coalitions)
-        for (final coalition in coalitions) {
-          if (coalition['cover_url'] != null && coalition['cover_url'].toString().isNotEmpty) {
-            return CoalitionModel.fromJson(coalition as Map<String, dynamic>);
-          }
-        }
-        
-        // Last resort: Return the last coalition
-        return CoalitionModel.fromJson(coalitions.last as Map<String, dynamic>);
+
+  /// Drops cached data, e.g. after the credentials change.
+  void clearCache() {
+    _cache.clear();
+    _inFlight.clear();
+  }
+
+  void dispose() => _client.close();
+
+  // ---------------------------------------------------------------------------
+
+  static CoalitionModel? _pickCoalition(List<Map<String, dynamic>> coalitions) {
+    if (coalitions.isEmpty) return null;
+    bool hasCover(Map<String, dynamic> c) =>
+        asString(c['cover_url']).isNotEmpty;
+    String slug(Map<String, dynamic> c) => asString(c['slug']);
+
+    final chosen = coalitions.firstWhere(
+      (c) =>
+          hasCover(c) &&
+          (slug(c).contains('42') || !slug(c).contains('piscine')),
+      orElse: () =>
+          coalitions.firstWhere(hasCover, orElse: () => coalitions.last),
+    );
+    return CoalitionModel.fromJson(chosen);
+  }
+
+  static CoalitionUserModel? _pickMembership(
+    List<Map<String, dynamic>> memberships,
+    int? coalitionId,
+  ) {
+    if (memberships.isEmpty) return null;
+    final models = memberships.map(CoalitionUserModel.fromJson).toList();
+    for (final m in models) {
+      if (m.coalitionId == coalitionId) return m;
+    }
+    models.sort((a, b) => b.score.compareTo(a.score));
+    return models.first;
+  }
+
+  Future<T> _cached<T>(
+    String key,
+    Future<T> Function() fetch, {
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final hit = _cache[key];
+      if (hit != null && DateTime.now().difference(hit.at) < _cacheTtl) {
+        // Re-insert to mark as most recently used.
+        _cache
+          ..remove(key)
+          ..[key] = hit;
+        return hit.value as T;
       }
-      return null;
-    } catch (e) {
-      throw Exception('Failed to get user coalition: $e');
+      final pending = _inFlight[key];
+      if (pending != null) return await pending as T;
     }
-  }
-  
-  /// Get user's coalition user data (score and rank)
-  Future<CoalitionUserModel?> getUserCoalitionUser(String login) async {
+
+    final future = fetch();
+    _inFlight[key] = future;
     try {
-      final data = await _get('/users/$login/coalitions_users');
-      if (data is List && data.isNotEmpty) {
-        // Find the coalition user data that matches the active coalition
-        // Typically this is the one with the highest score or most recent
-        final sortedData = List<Map<String, dynamic>>.from(data)
-          ..sort((a, b) {
-            final scoreA = (a['score'] as num?)?.toInt() ?? 0;
-            final scoreB = (b['score'] as num?)?.toInt() ?? 0;
-            return scoreB.compareTo(scoreA);
-          });
-        
-        return CoalitionUserModel.fromJson(sortedData.first);
-      } else if (data is Map<String, dynamic>) {
-        // In case the API returns a single object
-        return CoalitionUserModel.fromJson(data);
+      final value = await future;
+      _cache
+        ..remove(key)
+        ..[key] = (at: DateTime.now(), value: value);
+      while (_cache.length > _maxCacheEntries) {
+        _cache.remove(_cache.keys.first);
       }
-      return null;
-    } catch (e) {
-      //print('Error getting coalition user data: $e');
-      return null;
+      return value;
+    } finally {
+      if (identical(_inFlight[key], future)) _inFlight.remove(key);
     }
   }
-  
-  /// Get user achievements
-  Future<List<Map<String, dynamic>>> getUserAchievements(String login) async {
-    try {
-      // Get user data which includes achievements
-      final userData = await _get('/users/$login');
-      final achievements = userData['achievements'] as List? ?? [];
-      
-      return achievements.map((achievement) => {
-        'name': achievement['name'] ?? '',
-        'description': achievement['description'] ?? '',
-        'kind': achievement['kind'] ?? '',
-        'tier': achievement['tier'] ?? '',
-        'image': achievement['image'] ?? '',
-      }).toList();
-    } catch (e) {
-      throw Exception('Failed to get user achievements: $e');
+
+  Future<T> _get<T>(
+    String path,
+    Map<String, String>? query,
+    T Function(Object? json) parse,
+  ) async {
+    final uri = Uri.https(_host, path, query);
+    var token = await _auth.getAccessToken();
+    var refreshedToken = false;
+
+    for (var attempt = 0; ; attempt++) {
+      await _limiter.acquire();
+      final http.Response response;
+      try {
+        response = await _client
+            .get(
+              uri,
+              headers: {
+                'Authorization': 'Bearer $token',
+                'Accept': 'application/json',
+              },
+            )
+            .timeout(_timeout);
+      } on TimeoutException {
+        throw const ApiException(
+          'The request timed out. Check your connection.',
+        );
+      } on http.ClientException catch (e) {
+        throw ApiException('Network error: ${e.message}');
+      }
+
+      switch (response.statusCode) {
+        case 200:
+          return _decode(response.body, parse);
+        case 401 when !refreshedToken:
+          token = await _auth.refreshToken();
+          refreshedToken = true;
+        case 429 when attempt < 3:
+          final retryAfter =
+              int.tryParse(response.headers['retry-after'] ?? '') ?? 1;
+          await Future<void>.delayed(Duration(seconds: retryAfter.clamp(1, 5)));
+        case 404:
+          throw const ApiException('Not found', statusCode: 404);
+        default:
+          throw ApiException(
+            'Request failed (HTTP ${response.statusCode})',
+            statusCode: response.statusCode,
+          );
+      }
     }
   }
+
+  static Future<T> _decode<T>(String body, T Function(Object? json) parse) {
+    if (body.length < _isolateThreshold) {
+      return Future.value(parse(json.decode(body)));
+    }
+    return compute(_DecodeJob<T>(parse).call, body);
+  }
+
+  static List<UserModel> _parseUserList(Object? json) =>
+      asMapList(json)
+          .map(UserModel.fromJson)
+          // Same behaviour as before: hide accounts without a photo (mostly
+          // system / test accounts).
+          .where((u) => u.login.isNotEmpty && u.imageUrl != null)
+          .toList(growable: false);
+
+  static UserModel _parseUser(Object? json) =>
+      UserModel.fromJson(json as Map<String, dynamic>);
+}
+
+/// Top-level-safe callable so `compute` can send it to the worker isolate.
+class _DecodeJob<T> {
+  const _DecodeJob(this.parse);
+  final T Function(Object? json) parse;
+  T call(String body) => parse(json.decode(body));
+}
+
+class ApiException implements Exception {
+  const ApiException(this.message, {this.statusCode});
+  final String message;
+  final int? statusCode;
+
+  @override
+  String toString() => message;
 }

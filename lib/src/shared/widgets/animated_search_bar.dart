@@ -1,125 +1,114 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+
 import '../../core/themes/app_theme.dart';
 
+/// Search field that glows while focused.
+///
+/// Focus is tracked with a [FocusNode] (the old version guessed it from taps,
+/// so the glow got stuck on after closing the keyboard with the back button),
+/// and the clear button now updates as you type.
 class AnimatedSearchBar extends StatefulWidget {
   const AnimatedSearchBar({
-    required this.controller, required this.onChanged, required this.hintText, super.key,
+    required this.controller,
+    required this.onChanged,
+    required this.hintText,
+    this.onSubmitted,
+    super.key,
   });
+
   final TextEditingController controller;
-  final Function(String) onChanged;
+  final ValueChanged<String> onChanged;
+  final ValueChanged<String>? onSubmitted;
   final String hintText;
 
   @override
   State<AnimatedSearchBar> createState() => _AnimatedSearchBarState();
 }
 
-class _AnimatedSearchBarState extends State<AnimatedSearchBar> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  bool _isFocused = false;
+class _AnimatedSearchBarState extends State<AnimatedSearchBar> {
+  final FocusNode _focusNode = FocusNode();
+
+  static const _radius = BorderRadius.all(Radius.circular(16));
+  static const _focusedShadow = [
+    BoxShadow(color: Color(0x4D00BABC), blurRadius: 20, offset: Offset(0, 4)),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.02,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _focusNode.addListener(_onFocusChanged);
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _focusNode
+      ..removeListener(_onFocusChanged)
+      ..dispose();
     super.dispose();
   }
 
+  void _onFocusChanged() => setState(() {});
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _scaleAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnimation.value,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: _isFocused
-                  ? [
-                      BoxShadow(
-                        color: AppTheme().primaryColor.withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : [],
+    final focused = _focusNode.hasFocus;
+    return AnimatedScale(
+      scale: focused ? 1.02 : 1.0,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          borderRadius: _radius,
+          boxShadow: focused ? _focusedShadow : const [],
+        ),
+        child: TextField(
+          controller: widget.controller,
+          focusNode: _focusNode,
+          onChanged: widget.onChanged,
+          onSubmitted: widget.onSubmitted,
+          onTapOutside: (_) => _focusNode.unfocus(),
+          textInputAction: TextInputAction.search,
+          autocorrect: false,
+          enableSuggestions: false,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: widget.hintText,
+            hintStyle: const TextStyle(color: Colors.white54),
+            prefixIcon: Icon(
+              Icons.search,
+              color: focused ? AppTheme.primaryColor : Colors.white54,
             ),
-            child: TextField(
-              controller: widget.controller,
-              onChanged: widget.onChanged,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: widget.hintText,
-                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: _isFocused ? AppTheme().primaryColor : Colors.white.withValues(alpha: 0.5),
-                ),
-                suffixIcon: widget.controller.text.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          color: Colors.white.withValues(alpha: 0.5),
-                        ),
-                        onPressed: () {
-                          widget.controller.clear();
-                          widget.onChanged('');
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.1),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                    color: AppTheme().primaryColor,
-                    width: 2,
-                  ),
-                ),
-              ),
-              onTap: () {
-                setState(() {
-                  _isFocused = true;
-                });
-                _animationController.forward();
-              },
-              onSubmitted: (_) {
-                setState(() {
-                  _isFocused = false;
-                });
-                _animationController.reverse();
-              },
-              onTapOutside: (_) {
-                setState(() {
-                  _isFocused = false;
-                });
-                _animationController.reverse();
-              },
+            suffixIcon: ListenableBuilder(
+              listenable: widget.controller,
+              builder: (context, _) => widget.controller.text.isEmpty
+                  ? const SizedBox.shrink()
+                  : IconButton(
+                      icon: const Icon(Icons.clear, color: Colors.white54),
+                      tooltip: 'Clear',
+                      onPressed: () {
+                        widget.controller.clear();
+                        widget.onChanged('');
+                      },
+                    ),
+            ),
+            filled: true,
+            fillColor: const Color(0x1AFFFFFF),
+            border: const OutlineInputBorder(
+              borderRadius: _radius,
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: const OutlineInputBorder(
+              borderRadius: _radius,
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: const OutlineInputBorder(
+              borderRadius: _radius,
+              borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

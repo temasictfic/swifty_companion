@@ -1,103 +1,73 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
-import '../../../core/models/coalition_model.dart';
 import '../../../core/models/coalition_user_model.dart';
 import '../../../core/models/user_model.dart';
-import '../../../shared/widgets/optimized_glass_container.dart';
+import '../../../shared/widgets/surface_card.dart';
 
 class ProfileStats extends StatelessWidget {
   const ProfileStats({
     required this.user,
-    super.key,
-    this.coalition,
+    required this.accent,
     this.coalitionUser,
+    super.key,
   });
+
   final UserModel user;
-  final CoalitionModel? coalition;
   final CoalitionUserModel? coalitionUser;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
-    return OptimizedGlassContainer(
+    final rank = coalitionUser?.rank;
+    return SurfaceCard(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Expanded(
-            child: _buildStatItem(
-              icon: Icons.account_balance_wallet,
-              value: '${user.wallet}₳',
-              label: 'Wallet',
-            ),
-          ),
-          _buildDivider(),
-          Expanded(
-            child: _buildStatItem(
-              icon: Icons.check_circle,
-              value: user.correctionPoint.toString(),
-              label: 'Evo Points',
-            ),
-          ),
-          _buildDivider(),
-          Expanded(
-            child: _buildStatItem(
-              icon: Icons.emoji_events,
-              value: '${coalitionUser?.score ?? 0}',
-              label: 'Score',
-            ),
-          ),
-          _buildDivider(),
-          Expanded(
-            child: _buildStatItem(
-              icon: Icons.leaderboard,
-              value: coalitionUser?.rank != null ? '#${coalitionUser!.rank}' : 'N/A',
-              label: 'Rank',
-            ),
-          ),
+          _stat(Icons.account_balance_wallet, '${user.wallet}₳', 'Wallet'),
+          _divider,
+          _stat(Icons.check_circle, '${user.correctionPoint}', 'Evo Points'),
+          _divider,
+          _stat(Icons.emoji_events, '${coalitionUser?.score ?? 0}', 'Score'),
+          _divider,
+          _stat(Icons.leaderboard, rank != null ? '#$rank' : 'N/A', 'Rank'),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem({
-    required IconData icon,
-    required String value,
-    required String label,
-  }) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: coalition?.colorValue != null ? Color(coalition!.colorValue) : Colors.white,
-          size: 24,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.white.withValues(alpha: 0.7),
-          ),
-        ),
-      ],
-    );
-  }
+  static const Widget _divider = SizedBox(
+    height: 40,
+    width: 1,
+    child: ColoredBox(color: Color(0x33FFFFFF)),
+  );
 
-  Widget _buildDivider() {
-    return Container(
-      height: 40,
-      width: 1,
-      color: Colors.white.withValues(alpha: 0.2),
+  Widget _stat(IconData icon, String value, String label) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, color: accent, size: 24),
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 11, color: Colors.white70),
+          ),
+        ],
+      ),
     );
   }
 }

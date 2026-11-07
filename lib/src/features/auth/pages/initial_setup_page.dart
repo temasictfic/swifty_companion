@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class InitialSetupPage extends StatelessWidget {
   const InitialSetupPage({super.key});
@@ -6,7 +6,7 @@ class InitialSetupPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -19,7 +19,7 @@ class InitialSetupPage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     const SizedBox(height: 24),
-                    
+
                     // App Logo or Icon
                     Container(
                       width: 120,
@@ -35,7 +35,7 @@ class InitialSetupPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Welcome Text
                     Text(
                       'Welcome to Fluttery Mate',
@@ -45,7 +45,7 @@ class InitialSetupPage extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Description
                     Text(
                       'To get started with browsing 42 student profiles, '
@@ -54,7 +54,7 @@ class InitialSetupPage extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 48),
-                    
+
                     // Features List
                     _buildFeatureItem(
                       context,
@@ -77,7 +77,7 @@ class InitialSetupPage extends StatelessWidget {
                       'Your credentials are stored safely on device',
                     ),
                     const SizedBox(height: 48),
-                    
+
                     // Setup Button
                     SizedBox(
                       width: double.infinity,
@@ -99,9 +99,9 @@ class InitialSetupPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Help Link
                     TextButton(
                       onPressed: () {
@@ -109,7 +109,7 @@ class InitialSetupPage extends StatelessWidget {
                       },
                       child: const Text('How to get API credentials?'),
                     ),
-                    
+
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -120,7 +120,7 @@ class InitialSetupPage extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildFeatureItem(
     BuildContext context,
     IconData icon,
@@ -128,16 +128,13 @@ class InitialSetupPage extends StatelessWidget {
     String description,
   ) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.dividerColor,
-          width: 1,
-        ),
+        border: Border.all(color: theme.dividerColor, width: 1),
       ),
       child: Row(
         children: [
@@ -148,10 +145,7 @@ class InitialSetupPage extends StatelessWidget {
               color: theme.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              color: theme.primaryColor,
-            ),
+            child: Icon(icon, color: theme.primaryColor),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -178,7 +172,7 @@ class InitialSetupPage extends StatelessWidget {
       ),
     );
   }
-  
+
   void _showHelpDialog(BuildContext context) {
     showDialog(
       context: context,

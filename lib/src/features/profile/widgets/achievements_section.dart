@@ -1,120 +1,109 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import '../../../core/models/user_model.dart';
-import '../../../shared/widgets/optimized_glass_container.dart';
+import 'package:material_ui/material_ui.dart';
 
-class AchievementsSection extends StatelessWidget {
-  const AchievementsSection({
-    required this.achievements, super.key,
-    this.coalitionColor,
+import '../../../core/models/user_model.dart';
+import '../../../shared/widgets/surface_card.dart';
+import 'section_empty_state.dart';
+
+/// Lazily built 2-column achievements grid (replaces the eager
+/// flutter_staggered_grid_view grid, which built every tile up front).
+class AchievementsSliver extends StatelessWidget {
+  const AchievementsSliver({
+    required this.achievements,
+    required this.accent,
+    super.key,
   });
+
   final List<AchievementModel> achievements;
-  final String? coalitionColor;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     if (achievements.isEmpty) {
-      return _buildEmptyState();
+      return const SliverToBoxAdapter(
+        child: SectionEmptyState(
+          icon: Icons.emoji_events_outlined,
+          text: 'No achievements yet',
+        ),
+      );
     }
-
-    return StaggeredGrid.count(
-      crossAxisCount: 2,
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      children: achievements.map((achievement) {
-        return StaggeredGridTile.count(
-          crossAxisCellCount: 1,
-          mainAxisCellCount: 1,
-          child: _buildAchievementCard(achievement),
-        );
-      }).toList(),
+    return SliverGrid.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        mainAxisExtent: 168,
+      ),
+      itemCount: achievements.length,
+      itemBuilder: (context, index) =>
+          _AchievementCard(achievement: achievements[index], accent: accent),
     );
   }
+}
 
-  Widget _buildAchievementCard(AchievementModel achievement) {
-    final color = coalitionColor != null
-        ? Color(int.parse('0xFF${coalitionColor!.replaceAll('#', '')}'))
-        : const Color(0xFF00BABC);
+class _AchievementCard extends StatelessWidget {
+  const _AchievementCard({required this.achievement, required this.accent});
 
-    return OptimizedGlassContainer(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            _getAchievementIcon(achievement.kind),
-            size: 32,
-            color: achievement.tier != 'none' ? color : Colors.white.withValues(alpha: 0.6),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            achievement.name,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
+  final AchievementModel achievement;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasTier = achievement.hasTier;
+
+    return Tooltip(
+      message: achievement.description,
+      triggerMode: TooltipTriggerMode.tap,
+      child: SurfaceCard(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              _icon(achievement.kind),
+              size: 32,
+              color: hasTier ? accent : Colors.white60,
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (achievement.tier != 'none') ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 12),
+            Text(
+              achievement.name,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
               ),
-              child: Text(
-                achievement.tier.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: color,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (hasTier) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  achievement.tier.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: accent,
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 
-  IconData _getAchievementIcon(String kind) {
-    switch (kind) {
-      case 'project':
-        return Icons.article;
-      case 'social':
-        return Icons.people;
-      case 'pedagogy':
-        return Icons.school;
-      case 'scolarity':
-        return Icons.schedule;
-      default:
-        return Icons.emoji_events;
-    }
-  }
-
-  Widget _buildEmptyState() {
-    return OptimizedGlassContainer(
-      child: Column(
-        children: [
-          Icon(
-            Icons.emoji_events_outlined,
-            size: 60,
-            color: Colors.white.withValues(alpha: 0.3),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No achievements yet',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white.withValues(alpha: 0.5),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  static IconData _icon(String kind) => switch (kind) {
+    'project' => Icons.article,
+    'social' => Icons.people,
+    'pedagogy' => Icons.school,
+    'scolarity' => Icons.schedule,
+    _ => Icons.emoji_events,
+  };
 }

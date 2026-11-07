@@ -192,8 +192,8 @@ flutter build apk --release
 
 1. Check minimum Android version:
    ```yaml
-   # In android/app/build.gradle
-   minSdkVersion 21  # or higher
+   # android/app/build.gradle.kts uses flutter.minSdkVersion (API 24 / Android 7.0)
+   minSdk = flutter.minSdkVersion
    ```
 
 2. Ensure all permissions are granted

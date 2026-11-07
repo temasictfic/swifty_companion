@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fluttery_mate/src/core/models/coalition_model.dart';
+import 'package:fluttery_mate/src/core/models/coalition_user_model.dart';
 import 'package:fluttery_mate/src/core/models/project_model.dart';
 import 'package:fluttery_mate/src/core/models/user_model.dart';
 
@@ -38,7 +39,7 @@ void main() {
               {'name': 'Algorithms', 'level': 3.5},
               {'name': 'Graphics', 'level': 2.8},
             ],
-          }
+          },
         ],
         'achievements': [
           {
@@ -46,7 +47,7 @@ void main() {
             'description': 'Complete your first project',
             'kind': 'project',
             'tier': 'easy',
-          }
+          },
         ],
       };
 
@@ -89,10 +90,7 @@ void main() {
 
     test('should handle in-progress projects', () {
       final json = {
-        'project': {
-          'name': 'webserv',
-          'slug': 'webserv',
-        },
+        'project': {'name': 'webserv', 'slug': 'webserv'},
         'status': 'in_progress',
         'validated?': false,
         'created_at': '2023-07-01T00:00:00.000Z',
@@ -125,6 +123,70 @@ void main() {
       expect(coalition.color, '#00FF00');
       expect(coalition.colorValue, 0xFF00FF00);
       expect(coalition.score, 42000);
+    });
+
+    test('falls back to the app colour for malformed colours', () {
+      final coalition = CoalitionModel.fromJson({'color': 'not-a-colour'});
+      expect(coalition.colorValue, 0xFF00BABC);
+      expect(CoalitionModel.fromJson({'color': '#f00'}).colorValue, 0xFFFF0000);
+    });
+  });
+
+  group('Robust parsing', () {
+    test('UserModel tolerates nulls, doubles and the hidden phone marker', () {
+      final user = UserModel.fromJson({
+        'login': 'jdoe',
+        'phone': 'hidden',
+        'wallet': 12.0,
+        'correction_point': null,
+        'image': {
+          'link': 'https://example.com/full.jpg',
+          'versions': {'small': 'https://example.com/small.jpg'},
+        },
+        'cursus_users': [
+          {'cursus_id': 9, 'level': 3.1},
+          {'cursus_id': 21, 'level': 7.5, 'grade': 'Learner'},
+        ],
+        'projects_users': [
+          {
+            'project': {'name': 'old'},
+            'status': 'finished',
+            'validated?': true,
+            'created_at': '2022-01-01T00:00:00Z',
+          },
+          {
+            'project': {'name': 'new'},
+            'status': 'in_progress',
+            'created_at': '2024-01-01T00:00:00Z',
+          },
+          {
+            'project': {'name': 'no date'},
+            'status': 'finished',
+          },
+        ],
+      });
+
+      expect(user.phone, isNull);
+      expect(user.wallet, 12);
+      expect(user.correctionPoint, 0);
+      expect(user.level, 7.5); // 42cursus preferred over the piscine
+      expect(user.currentGrade, 'Learner');
+      expect(user.displayName, 'jdoe');
+      expect(user.smallImageUrl, 'https://example.com/small.jpg');
+      expect(user.projects.map((p) => p.name), ['new', 'old', 'no date']);
+      expect(user.activeProjectCount, 1);
+      expect(user.completedProjectCount, 1);
+    });
+
+    test('CoalitionUserModel accepts a missing rank', () {
+      final membership = CoalitionUserModel.fromJson({
+        'id': 1,
+        'score': 10.0,
+        'coalition_id': 2,
+        'user_id': 3,
+      });
+      expect(membership.rank, isNull);
+      expect(membership.score, 10);
     });
   });
 }

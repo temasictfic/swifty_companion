@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 class CredentialForm extends StatefulWidget {
@@ -19,7 +19,7 @@ class CredentialFormState extends State<CredentialForm> {
   final _formKey = GlobalKey<FormState>();
   final _clientIdController = TextEditingController();
   final _clientSecretController = TextEditingController();
-  
+
   bool _obscureSecret = true;
   bool _isExpanded = false;
 
@@ -91,9 +91,13 @@ class CredentialFormState extends State<CredentialForm> {
                           icon: const Icon(Icons.paste),
                           tooltip: 'Paste from clipboard',
                           onPressed: () async {
-                            final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
-                            if (clipboardData != null && clipboardData.text != null) {
-                              _clientIdController.text = clipboardData.text!;
+                            final clipboardData = await Clipboard.getData(
+                              Clipboard.kTextPlain,
+                            );
+                            if (clipboardData != null &&
+                                clipboardData.text != null) {
+                              _clientIdController.text = clipboardData.text!
+                                  .trim();
                             }
                           },
                         ),
@@ -121,7 +125,11 @@ class CredentialFormState extends State<CredentialForm> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: Icon(_obscureSecret ? Icons.visibility : Icons.visibility_off),
+                              icon: Icon(
+                                _obscureSecret
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
                               onPressed: () {
                                 setState(() {
                                   _obscureSecret = !_obscureSecret;
@@ -132,9 +140,14 @@ class CredentialFormState extends State<CredentialForm> {
                               icon: const Icon(Icons.paste),
                               tooltip: 'Paste from clipboard',
                               onPressed: () async {
-                                final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
-                                if (clipboardData != null && clipboardData.text != null) {
-                                  _clientSecretController.text = clipboardData.text!;
+                                final clipboardData = await Clipboard.getData(
+                                  Clipboard.kTextPlain,
+                                );
+                                if (clipboardData != null &&
+                                    clipboardData.text != null) {
+                                  _clientSecretController.text = clipboardData
+                                      .text!
+                                      .trim();
                                 }
                               },
                             ),
@@ -171,7 +184,8 @@ class CredentialFormState extends State<CredentialForm> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                        color: Theme.of(context).colorScheme.primary
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(

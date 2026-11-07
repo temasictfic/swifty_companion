@@ -1,176 +1,133 @@
+import 'dart:async';
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'settings_service.dart';
 
+/// Obtains and caches 42 API access tokens (OAuth client-credentials flow).
 class AuthService {
+  AuthService({required this._client, SettingsService? settings})
+    : _settings = settings ?? SettingsService();
+
   static const String _tokenKey = 'access_token';
   static const String _tokenExpiryKey = 'token_expiry';
-  static const String _baseUrl = 'https://api.intra.42.fr/oauth/token';
+  static final Uri _tokenUri = Uri.parse('https://api.intra.42.fr/oauth/token');
+  static const Duration _timeout = Duration(seconds: 15);
 
-  // Cache the token in memory for quick access
+  final http.Client _client;
+  final SettingsService _settings;
+
   String? _cachedToken;
   DateTime? _cachedExpiry;
-  
-  // Singleton instance
-  static final AuthService _instance = AuthService._internal();
-  factory AuthService() => _instance;
-  AuthService._internal();
-  
-  final SettingsService _settingsService = SettingsService();
 
-  /// Get API credentials from settings only
-  Future<Map<String, String>> _getApiCredentials() async {
-    //print('Getting API credentials...');
-    
-    // Get credentials from secure storage
-    final credentials = await _settingsService.getCredentials();
-    
-    if (credentials['clientId'] != null && credentials['clientSecret'] != null) {
-      //print('Got credentials from secure storage');
-      return {
-        'clientId': credentials['clientId']!,
-        'clientSecret': credentials['clientSecret']!,
-      };
-    }
-    
-    //print('No credentials in secure storage');
-    throw Exception('No API credentials found. Please configure them in settings.');
-  }
+  /// Shared in-flight token request so concurrent callers don't each fetch one.
+  Future<String>? _pendingToken;
 
-  /// Get a valid access token, either from cache or by fetching a new one
+  /// Returns a valid token from memory, disk, or the network (in that order).
   Future<String> getAccessToken() async {
-    // Check memory cache first
-    if (_cachedToken != null && _cachedExpiry != null) {
-      if (_cachedExpiry!.isAfter(DateTime.now())) {
-        return _cachedToken!;
+    final token = _cachedToken;
+    if (token != null && (_cachedExpiry?.isAfter(DateTime.now()) ?? false)) {
+      return token;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getString(_tokenKey);
+    final expiryMillis = prefs.getInt(_tokenExpiryKey);
+    if (stored != null && expiryMillis != null) {
+      final expiry = DateTime.fromMillisecondsSinceEpoch(expiryMillis);
+      if (expiry.isAfter(DateTime.now())) {
+        _cachedToken = stored;
+        _cachedExpiry = expiry;
+        return stored;
       }
     }
 
-    // Check persistent storage
-    final storedToken = await _getStoredToken();
-    if (storedToken != null) {
-      _cachedToken = storedToken['token'] as String;
-      _cachedExpiry = storedToken['expiry'] as DateTime;
-      return _cachedToken!;
-    }
-
-    // Fetch new token
     return _fetchNewToken();
   }
 
-  /// Fetch a new access token from the API
-  Future<String> _fetchNewToken() async {
-    try {
-      final credentials = await _getApiCredentials();
-      
-      final response = await http.post(
-        Uri.parse(_baseUrl),
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: {
-          'grant_type': 'client_credentials',
-          'client_id': credentials['clientId']!,
-          'client_secret': credentials['clientSecret']!,
-        },
+  /// Discards the current token and fetches a new one (used after a 401).
+  Future<String> refreshToken() async {
+    await clearAuth();
+    return _fetchNewToken();
+  }
+
+  Future<String> _fetchNewToken() {
+    return _pendingToken ??= _requestToken().whenComplete(
+      () => _pendingToken = null,
+    );
+  }
+
+  Future<String> _requestToken() async {
+    final credentials = await _settings.getCredentials();
+    final clientId = credentials.clientId;
+    final clientSecret = credentials.clientSecret;
+    if (clientId == null || clientSecret == null) {
+      throw const AuthException(
+        'No API credentials found. Please configure them in settings.',
       );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final token = data['access_token'] as String;
-        final expiresIn = data['expires_in'] as int;
-
-        // Calculate expiry time
-        final expiry = DateTime.now().add(Duration(seconds: expiresIn - 60)); // 60 seconds buffer
-
-        // Store token
-        await _storeToken(token, expiry);
-
-        // Update cache
-        _cachedToken = token;
-        _cachedExpiry = expiry;
-
-        return token;
-      } else {
-        throw Exception('Failed to obtain access token: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching access token: $e');
-    }
-  }
-
-  /// Get stored token from SharedPreferences
-  Future<Map<String, dynamic>?> _getStoredToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(_tokenKey);
-    final expiryMillis = prefs.getInt(_tokenExpiryKey);
-
-    if (token == null || expiryMillis == null) {
-      return null;
     }
 
-    final expiry = DateTime.fromMillisecondsSinceEpoch(expiryMillis);
-
-    if (expiry.isAfter(DateTime.now())) {
-      return {
-        'token': token,
-        'expiry': expiry,
-      };
+    final response = await _postToken(clientId, clientSecret);
+    if (response.statusCode != 200) {
+      throw AuthException(
+        'Failed to obtain access token (HTTP ${response.statusCode})',
+      );
     }
 
-    // Token expired, clear it
-    await _clearStoredToken();
-    return null;
-  }
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    final token = data['access_token'] as String;
+    final expiresIn = (data['expires_in'] as num?)?.toInt() ?? 7200;
+    // Refresh a minute early so a token never expires mid-request.
+    final expiry = DateTime.now().add(Duration(seconds: expiresIn - 60));
 
-  /// Store token in SharedPreferences
-  Future<void> _storeToken(String token, DateTime expiry) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
     await prefs.setInt(_tokenExpiryKey, expiry.millisecondsSinceEpoch);
+
+    _cachedToken = token;
+    _cachedExpiry = expiry;
+    return token;
   }
 
-  /// Clear stored token
-  Future<void> _clearStoredToken() async {
+  Future<http.Response> _postToken(String clientId, String clientSecret) {
+    return _client
+        .post(
+          _tokenUri,
+          body: {
+            'grant_type': 'client_credentials',
+            'client_id': clientId,
+            'client_secret': clientSecret,
+          },
+        )
+        .timeout(_timeout);
+  }
+
+  /// Clears cached tokens in memory and on disk.
+  Future<void> clearAuth() async {
+    _cachedToken = null;
+    _cachedExpiry = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_tokenExpiryKey);
   }
 
-  /// Force refresh the access token
-  Future<String> refreshToken() async {
-    await _clearStoredToken();
-    _cachedToken = null;
-    _cachedExpiry = null;
-    return _fetchNewToken();
-  }
-
-  /// Clear all authentication data
-  Future<void> clearAuth() async {
-    await _clearStoredToken();
-    _cachedToken = null;
-    _cachedExpiry = null;
-  }
-  
-  /// Validate credentials by attempting to get an access token
+  /// Returns true if the given credentials can obtain a token.
   Future<bool> validateCredentials(String clientId, String clientSecret) async {
     try {
-      final response = await http.post(
-        Uri.parse(_baseUrl),
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: {
-          'grant_type': 'client_credentials',
-          'client_id': clientId,
-          'client_secret': clientSecret,
-        },
-      );
-
+      final response = await _postToken(clientId, clientSecret);
       return response.statusCode == 200;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
+}
+
+class AuthException implements Exception {
+  const AuthException(this.message);
+  final String message;
+
+  @override
+  String toString() => message;
 }

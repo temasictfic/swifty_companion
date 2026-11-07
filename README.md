@@ -91,8 +91,8 @@ Key packages used in this project:
 - `provider`: State management
 - `cached_network_image`: Image caching
 - `shimmer`: Loading animations
-- `glass_kit`: Glassmorphism effects
-- `animations`: Smooth transitions
+- `material_ui`: Material Design widgets (now a package, separate from the Flutter SDK)
+- `flutter_svg`: Coalition logos
 
 ## License
 

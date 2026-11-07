@@ -1,27 +1,28 @@
-import 'package:flutter/material.dart';
-import '../../../shared/widgets/optimized_glass_container.dart';
+import 'package:material_ui/material_ui.dart';
+
+import '../../../shared/widgets/surface_card.dart';
 
 class ProfileSection extends StatelessWidget {
   const ProfileSection({
-    required this.title, required this.icon, required this.children, super.key,
+    required this.title,
+    required this.icon,
+    required this.children,
+    super.key,
   });
+
   final String title;
   final IconData icon;
   final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    return OptimizedGlassContainer(
+    return SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                color: Colors.white.withValues(alpha: 0.8),
-                size: 20,
-              ),
+              Icon(icon, color: Colors.white70, size: 20),
               const SizedBox(width: 8),
               Text(
                 title,

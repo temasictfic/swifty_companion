@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches AppTheme.backgroundColor so there is no white flash before Flutter's first frame. -->
+    <color name="launch_background">#0F0F0F</color>
+	<color name="ic_launcher_background">#009AA2</color>
+</resources>

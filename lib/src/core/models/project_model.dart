@@ -1,6 +1,7 @@
-class ProjectModel {
+import 'json_utils.dart';
 
-  ProjectModel({
+class ProjectModel {
+  const ProjectModel({
     required this.name,
     required this.slug,
     required this.status,
@@ -8,31 +9,29 @@ class ProjectModel {
     required this.occurrence,
     required this.createdAt,
     this.finalMark,
-    this.projectImageUrl,
     this.markedAt,
   });
 
   factory ProjectModel.fromJson(Map<String, dynamic> json) {
-    final project = json['project'] as Map<String, dynamic>? ?? {};
-    
+    final project = asMap(json['project']) ?? const {};
     return ProjectModel(
-      name: project['name']?.toString() ?? '',
-      slug: project['slug']?.toString() ?? '',
-      finalMark: json['final_mark'] as int?,
-      status: json['status']?.toString() ?? '',
+      name: asString(project['name']),
+      slug: asString(project['slug']),
+      finalMark: asIntOrNull(json['final_mark']),
+      status: asString(json['status']),
       validated: json['validated?'] == true,
-      projectImageUrl: json['image_url'] as String?,
-      createdAt: DateTime.parse(json['created_at'].toString()),
-      markedAt: json['marked_at'] != null ? DateTime.parse(json['marked_at'].toString()) : null,
-      occurrence: json['occurrence'] as int? ?? 0,
+      createdAt:
+          asDate(json['created_at']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      markedAt: asDate(json['marked_at']),
+      occurrence: asInt(json['occurrence']),
     );
   }
+
   final String name;
   final String slug;
   final int? finalMark;
   final String status;
   final bool validated;
-  final String? projectImageUrl;
   final DateTime createdAt;
   final DateTime? markedAt;
   final int occurrence;
@@ -40,18 +39,16 @@ class ProjectModel {
   bool get isSuccess => finalMark != null && finalMark! >= 80;
   bool get isExcellent => finalMark != null && finalMark! > 100;
   bool get isInProgress => status == 'in_progress';
+  bool get isActive => status == 'in_progress' || status == 'searching_a_group';
   bool get isFailed => status == 'finished' && !validated;
-  
+  bool get isCompleted => status == 'finished' && validated;
+
   String get displayStatus {
-    if (isInProgress) {
-      return 'In Progress';
-    }
+    if (isInProgress) return 'In Progress';
     if (status == 'finished') {
-      if (finalMark != null) {
-        return finalMark.toString();
-      }
+      if (finalMark != null) return finalMark.toString();
       return validated ? 'Passed' : 'Failed';
     }
-    return status;
+    return status.replaceAll('_', ' ');
   }
 }

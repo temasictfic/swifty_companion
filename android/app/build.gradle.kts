@@ -1,7 +1,17 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
-    id("kotlin-android")
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Optional release signing: create android/key.properties (see SIGNING_GUIDE.md).
+// When it is missing, release builds fall back to the debug key so `flutter run --release` works.
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
 
 android {
@@ -14,57 +24,45 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
-
     defaultConfig {
         applicationId = "com.example.fluttery_mate"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        
-        // Add multidex support
-        multiDexEnabled = true
+    }
+
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = keystoreProperties.getProperty("storeFile")?.let { file(it) }
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
+        }
     }
 
     buildTypes {
-        getByName("release") {
-            // Use debug signing config for simplicity
-            signingConfig = signingConfigs.getByName("debug")
-            
-            // Disable minification
-            isMinifyEnabled = false
-            isShrinkResources = false
-            
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+        release {
+            signingConfig =
+                if (keystorePropertiesFile.exists()) {
+                    signingConfigs.getByName("release")
+                } else {
+                    signingConfigs.getByName("debug")
+                }
+            // R8 code + resource shrinking are enabled by the Flutter Gradle plugin for
+            // release builds, and it picks up proguard-rules.pro automatically.
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 
 flutter {
     source = "../.."
-}
-
-dependencies {
-    // Add multidex support
-    implementation("androidx.multidex:multidex:2.0.1")
-    
-    // Play Core libraries - use only ONE to avoid duplicates
-    // We're commenting out most of these to avoid duplicates
-    // implementation("com.google.android.play:core:1.10.3")
-    // implementation("com.google.android.play:core-ktx:1.8.1")
-    // implementation("com.google.android.play:review:2.0.1")
-    
-    // This provides the minimal Play Core functionality 
-    // needed by Flutter without duplicates
-    implementation("com.google.android.play:core-common:2.0.3")
-    implementation("com.google.android.play:feature-delivery:2.1.0")
-    
-    // Avoid using both core and review libraries together 
-    // as they have overlapping classes
 }
